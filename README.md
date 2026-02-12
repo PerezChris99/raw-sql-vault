@@ -60,14 +60,18 @@ This vault exists for one purpose: **To achieve SQL mastery at the enterprise le
 | **Intermediate** | Window Functions, String Functions, Date/Time, Conditional Logic |
 | **Advanced** | Views, Stored Procedures, Triggers, Transactions, Performance Optimization, Security, JSON, Recursive Queries, Database Administration, **Database Discipline** |
 
-### 🏗️ Enterprise Projects (Coming Soon)
+### 🏗️ Enterprise Projects (8 Completed)
 
-- Large-scale e-commerce database systems
-- Financial transaction processing platforms
-- Healthcare data management solutions
-- Real-time analytics and reporting systems
-- Multi-tenant SaaS database architectures
-- High-availability distributed systems
+| # | Project | Problem Domain | Key SQL Feature |
+|---|---------|----------------|----------------|
+| 1 | [Agriculture Yield Analytics](projects/agriculture_yield_analytics/) | Crop yield prediction | Pivots, aggregations |
+| 2 | [Corruption Report Auditor](projects/corruption_report_auditor/) | Fraud pattern detection | Window functions |
+| 3 | [Education Dropout Forecaster](projects/education_dropout_forecaster/) | Student retention risk | Recursive CTEs |
+| 4 | [Healthcare Outbreak Detector](projects/healthcare_outbreak_detector/) | Disease trend alerts | Sliding windows |
+| 5 | [Job Matching Engine](projects/job_matching_engine/) | Skills-to-jobs matching | Full-text search (tsvector) |
+| 6 | [Power Outage Analyzer](projects/power_outage_analyzer/) | Grid reliability tracking | Interval overlaps |
+| 7 | [Road Condition Aggregator](projects/road_condition_aggregator/) | Road damage prioritization | PostGIS, spatial queries |
+| 8 | [Water Point Monitor](projects/water_point_monitor/) | Borehole breakdown prediction | TimescaleDB time-series |
 
 ### 🛠️ Professional Tools
 
@@ -123,12 +127,15 @@ raw-sql-vault/
 │       ├── 02_sql_cheat_sheet.sql
 │       └── 03_real_world_projects.sql
 │
-└── projects/                          # Enterprise projects (coming soon)
-    ├── ecommerce/
-    ├── fintech/
-    ├── healthcare/
-    ├── analytics/
-    └── saas/
+└── projects/                          # 8 Completed Enterprise Projects
+    ├── agriculture_yield_analytics/   # Pivots, aggregations
+    ├── corruption_report_auditor/     # Window functions, fraud detection
+    ├── education_dropout_forecaster/  # Recursive CTEs
+    ├── healthcare_outbreak_detector/  # Sliding windows, alerts
+    ├── job_matching_engine/           # Full-text search (tsvector)
+    ├── power_outage_analyzer/         # Interval overlaps, MTBF
+    ├── road_condition_aggregator/     # PostGIS spatial queries
+    └── water_point_monitor/           # TimescaleDB time-series
 ```
 
 ---
@@ -164,49 +171,87 @@ raw-sql-vault/
 
 ## Projects
 
-### Planned Enterprise Solutions:
+### ✅ Completed Enterprise Solutions (8 Projects)
 
-#### 🛒 E-Commerce Platform Database
-- Multi-warehouse inventory management
-- Order processing with ACID compliance
-- Customer relationship management
-- Sales analytics and reporting
-- Payment transaction handling
+Each project follows a consistent structure: migrations, seeds, functions, views, reports, and PowerShell runners.
 
-#### 💰 Financial Transaction System
-- High-volume transaction processing
-- Audit trail and compliance logging
-- Real-time balance reconciliation
-- Fraud detection data models
-- Regulatory reporting
+---
 
-#### 🏥 Healthcare Data Management
-- Patient records with HIPAA considerations
-- Appointment scheduling systems
-- Medical billing and insurance
-- Lab results and diagnostics
-- Pharmaceutical inventory
+#### 🌾 Project 1: Agriculture Yield Analytics
+**Problem:** Predict crop yields from soil quality and weather data  
+**Key SQL:** PIVOT queries, cross-tabulation, aggregations  
+**Tables:** farms, fields, soil_samples, weather_logs, yields  
 
-#### 📊 Real-Time Analytics Platform
-- Data warehouse design
-- ETL pipeline schemas
-- OLAP cube structures
-- Dashboard data models
-- Time-series optimizations
+---
 
-#### 🏢 Multi-Tenant SaaS Architecture
-- Tenant isolation patterns
-- Subscription and billing models
-- Usage metering and quotas
-- Feature flag systems
-- Scalable schema design
+#### 🔍 Project 2: Corruption Report Auditor
+**Problem:** Detect anomalous transactions indicating fraud  
+**Key SQL:** Window functions (LAG, LEAD, ROW_NUMBER), percentiles  
+**Tables:** transactions, officials, departments, audit_flags  
+
+---
+
+#### 🎓 Project 3: Education Dropout Forecaster
+**Problem:** Identify at-risk students before they drop out  
+**Key SQL:** Recursive CTEs, hierarchical data, risk scoring  
+**Tables:** students, enrollments, attendance, grades, risk_factors  
+
+---
+
+#### 🏥 Project 4: Healthcare Outbreak Detector
+**Problem:** Early detection of disease outbreaks by region  
+**Key SQL:** Sliding windows, moving averages, threshold alerts  
+**Tables:** cases, facilities, regions, outbreak_alerts, trends  
+
+---
+
+#### 💼 Project 5: Job Matching Engine
+**Problem:** Match job seekers to positions by skills  
+**Key SQL:** PostgreSQL tsvector/tsquery, full-text search, GIN indexes  
+**Tables:** jobs, candidates, skills, job_skills, matches  
+
+---
+
+#### ⚡ Project 6: Power Outage Analyzer
+**Problem:** Track grid reliability and predict failures  
+**Key SQL:** Interval overlaps, MTBF/MTTR calculations, duration math  
+**Tables:** outages, substations, transformers, customers, reliability_metrics  
+
+---
+
+#### 🛣️ Project 7: Road Condition Aggregator
+**Problem:** Prioritize road repairs by damage severity and traffic  
+**Key SQL:** PostGIS spatial queries, ST_Intersects, ST_Buffer, ST_Length  
+**Tables:** road_segments, damage_reports, repairs (spatial geometries)  
+
+---
+
+#### 💧 Project 8: Water Point Monitor
+**Problem:** Predict borehole breakdowns from usage patterns  
+**Key SQL:** TimescaleDB hypertables, continuous aggregates, LAG() window functions  
+**Tables:** boreholes, usage_logs (hypertable), breakdown_alerts, health_scores  
+**Sample Query:**
+```sql
+SELECT borehole_id, AVG(usage) as avg_daily,
+       LAG(AVG(usage)) OVER (PARTITION BY borehole_id ORDER BY date) as prev
+FROM logs GROUP BY borehole_id, date;
+```
+
+---
+
+### 📋 Future Projects (Planned)
+
+- 🛒 E-Commerce Platform (inventory, orders, payments)
+- 💰 Financial Transaction System (ACID, audit trails)
+- 🏢 Multi-Tenant SaaS (tenant isolation, billing)
 
 ---
 
 ## Technical Specifications
 
-- **Primary Database**: MySQL 8.0+
-- **Secondary Support**: PostgreSQL, SQL Server concepts included
+- **Primary Database**: PostgreSQL 14+ (with extensions)
+- **Extensions Used**: PostGIS (spatial), TimescaleDB (time-series), pg_trgm (text search)
+- **Secondary Support**: MySQL 8.0+, SQL Server concepts included
 - **Standards**: ANSI SQL compliance where applicable
 - **Best Practices**: Enterprise patterns, SOLID principles for databases
 
