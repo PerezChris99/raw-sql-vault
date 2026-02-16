@@ -60,7 +60,7 @@ This vault exists for one purpose: **To achieve SQL mastery at the enterprise le
 | **Intermediate** | Window Functions, String Functions, Date/Time, Conditional Logic |
 | **Advanced** | Views, Stored Procedures, Triggers, Transactions, Performance Optimization, Security, JSON, Recursive Queries, Database Administration, **Database Discipline** |
 
-### 🏗️ Enterprise Projects (8 Completed)
+### 🏗️ Enterprise Projects (15 Completed)
 
 | # | Project | Problem Domain | Key SQL Feature |
 |---|---------|----------------|----------------|
@@ -72,6 +72,13 @@ This vault exists for one purpose: **To achieve SQL mastery at the enterprise le
 | 6 | [Power Outage Analyzer](projects/power_outage_analyzer/) | Grid reliability tracking | Interval overlaps |
 | 7 | [Road Condition Aggregator](projects/road_condition_aggregator/) | Road damage prioritization | PostGIS, spatial queries |
 | 8 | [Water Point Monitor](projects/water_point_monitor/) | Borehole breakdown prediction | TimescaleDB time-series |
+| 9 | [Refugee Aid Allocator](projects/refugee_aid_allocator/) | Priority-based aid distribution | RANK() window function |
+| 10 | [Waste Collection Optimizer](projects/waste_collection_optimizer/) | Smart bin routing | CTEs (WITH ... AS) |
+| 11 | [Boda Accident Mapper](projects/boda_accident_mapper/) | Motorcycle accident hotspots | NTILE() quartile ranking |
+| 12 | [Fishery Quota Checker](projects/fishery_quota_checker/) | Lake Victoria quota compliance | Rolling SUM() OVER |
+| 13 | [Tea Farmer Price Tracker](projects/tea_price_tracker/) | Middleman price fairness | PERCENTILE_CONT |
+| 14 | [Land Dispute Resolver](projects/land_dispute_resolver/) | Overlapping parcel detection | PostGIS ST_Intersects |
+| 15 | [Milk Supply Chain Auditor](projects/milk_supply_chain_auditor/) | Dairy batch traceability | Recursive CTEs
 
 ### 🛠️ Professional Tools
 
@@ -127,7 +134,7 @@ raw-sql-vault/
 │       ├── 02_sql_cheat_sheet.sql
 │       └── 03_real_world_projects.sql
 │
-└── projects/                          # 8 Completed Enterprise Projects
+└── projects/                          # 15 Completed Enterprise Projects
     ├── agriculture_yield_analytics/   # Pivots, aggregations
     ├── corruption_report_auditor/     # Window functions, fraud detection
     ├── education_dropout_forecaster/  # Recursive CTEs
@@ -135,7 +142,14 @@ raw-sql-vault/
     ├── job_matching_engine/           # Full-text search (tsvector)
     ├── power_outage_analyzer/         # Interval overlaps, MTBF
     ├── road_condition_aggregator/     # PostGIS spatial queries
-    └── water_point_monitor/           # TimescaleDB time-series
+    ├── water_point_monitor/           # TimescaleDB time-series
+    ├── refugee_aid_allocator/         # RANK() window function
+    ├── waste_collection_optimizer/    # CTEs (WITH ... AS)
+    ├── boda_accident_mapper/          # NTILE() quartile ranking
+    ├── fishery_quota_checker/         # Rolling SUM() OVER
+    ├── tea_price_tracker/             # PERCENTILE_CONT
+    ├── land_dispute_resolver/         # PostGIS ST_Intersects
+    └── milk_supply_chain_auditor/     # Recursive CTEs batch tracing
 ```
 
 ---
@@ -171,7 +185,7 @@ raw-sql-vault/
 
 ## Projects
 
-### ✅ Completed Enterprise Solutions (8 Projects)
+### ✅ Completed Enterprise Solutions (15 Projects)
 
 Each project follows a consistent structure: migrations, seeds, functions, views, reports, and PowerShell runners.
 
@@ -235,6 +249,107 @@ Each project follows a consistent structure: migrations, seeds, functions, views
 SELECT borehole_id, AVG(usage) as avg_daily,
        LAG(AVG(usage)) OVER (PARTITION BY borehole_id ORDER BY date) as prev
 FROM logs GROUP BY borehole_id, date;
+```
+
+---
+
+#### 🤝 Project 9: Refugee Aid Allocator
+**Problem:** Prioritize aid distribution to refugees based on need scores  
+**Key SQL:** RANK() window function for priority queuing  
+**Tables:** camps, refugees, households, needs, allocations  
+**Sample Query:**
+```sql
+SELECT refugee_id, 
+       RANK() OVER (ORDER BY need_score DESC) as priority 
+FROM needs WHERE camp='Bidibidi';
+```
+
+---
+
+#### 🗑️ Project 10: Waste Collection Optimizer
+**Problem:** Optimize garbage truck routes for bins exceeding fill threshold  
+**Key SQL:** Common Table Expressions (WITH ... AS)  
+**Tables:** zones, trucks, routes, bins, collections  
+**Sample Query:**
+```sql
+WITH full_bins AS (
+    SELECT * FROM bins WHERE level > 80
+) 
+SELECT route_id, COUNT(*) as urgent 
+FROM full_bins GROUP BY route_id;
+```
+
+---
+
+#### 🏍️ Project 11: Boda Accident Mapper
+**Problem:** Classify districts by motorcycle accident risk quartiles  
+**Key SQL:** NTILE() window function for statistical distribution  
+**Tables:** districts, accidents, severity_levels  
+**Sample Query:**
+```sql
+SELECT district, COUNT(*) as accidents,
+       NTILE(4) OVER (ORDER BY COUNT(*)) as risk_quartile 
+FROM accidents GROUP BY district;
+```
+
+---
+
+#### 🐟 Project 12: Fishery Quota Checker
+**Problem:** Monitor Lake Victoria fishing quota compliance with rolling totals  
+**Key SQL:** Rolling SUM() OVER with ROWS PRECEDING  
+**Tables:** fish_species, fishers, catches  
+**Sample Query:**
+```sql
+SELECT fisher_id, 
+       SUM(catch_weight) OVER (
+           PARTITION BY month ORDER BY date 
+           ROWS 30 PRECEDING
+       ) as quota_used 
+FROM catches;
+```
+
+---
+
+#### 🍵 Project 13: Tea Farmer Price Tracker
+**Problem:** Detect middleman underpayment using price percentiles  
+**Key SQL:** PERCENTILE_CONT ordered-set aggregate  
+**Tables:** tea_grades, farmers, buyers, sales  
+**Sample Query:**
+```sql
+SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY price) 
+       OVER (PARTITION BY grade) as median_price 
+FROM sales;
+```
+
+---
+
+#### 🗺️ Project 14: Land Dispute Resolver
+**Problem:** Detect overlapping land parcels for dispute resolution  
+**Key SQL:** PostGIS ST_Intersects for spatial overlap detection  
+**Tables:** land_districts, parcels, disputes  
+**Sample Query:**
+```sql
+SELECT p1.owner, p2.owner 
+FROM parcels p1, p2 
+WHERE ST_Intersects(p1.geom, p2.geom) 
+  AND p1.id != p2.id;
+```
+
+---
+
+#### 🥛 Project 15: Milk Supply Chain Auditor
+**Problem:** Trace milk batches from farm to consumer for safety compliance  
+**Key SQL:** Recursive CTEs (WITH RECURSIVE) for batch chain traversal  
+**Tables:** farmers, collection_centers, processing_plants, batches, batch_tests  
+**Sample Query:**
+```sql
+WITH RECURSIVE chain AS (
+    SELECT * FROM batches WHERE batch_id = 'X'
+    UNION 
+    SELECT b.* FROM batches b 
+    JOIN chain c ON b.prev_batch = c.batch_id
+) 
+SELECT * FROM chain;
 ```
 
 ---
