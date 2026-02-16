@@ -27,11 +27,12 @@ if (Test-Path $EnvFile) {
     }
 }
 
-$DB_HOST = $env:DB_HOST ?? 'localhost'
-$DB_PORT = $env:DB_PORT ?? '5432'
-$DB_NAME = $env:DB_NAME ?? 'refugee_aid'
-$DB_USER = $env:DB_USER ?? 'postgres'
-$env:PGPASSWORD = $env:DB_PASSWORD ?? 'postgres'
+# PowerShell 5.1 compatible null coalescing (works with PS 5.1+)
+$DB_HOST = if ($env:DB_HOST) { $env:DB_HOST } else { 'localhost' }
+$DB_PORT = if ($env:DB_PORT) { $env:DB_PORT } else { '5432' }
+$DB_NAME = if ($env:DB_NAME) { $env:DB_NAME } else { 'refugee_aid' }
+$DB_USER = if ($env:DB_USER) { $env:DB_USER } else { 'postgres' }
+$env:PGPASSWORD = if ($env:DB_PASSWORD) { $env:DB_PASSWORD } else { 'postgres' }
 
 $ProjectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path | Split-Path -Parent
 $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"

@@ -72,4 +72,50 @@ FROM catches;
 
 ---
 
+## 🔌 Backend Integration
+
+### Environment Variables
+```bash
+DB_HOST=localhost
+DB_PORT=6432
+DB_NAME=fishery_quota
+DB_USER=app_service
+DB_PASSWORD=your_secure_password
+```
+
+### Node.js Example
+```javascript
+const { createConnector } = require('../../_infrastructure/connectors/nodejs/pg-connector');
+const db = createConnector('fishery_quota');
+
+// Get quota usage with rolling window
+const quotaStatus = await db.query(`
+    SELECT fisher_id, catch_date, catch_weight,
+           SUM(catch_weight) OVER (
+               PARTITION BY fisher_id, species_id
+               ORDER BY catch_date
+               ROWS 30 PRECEDING
+           ) as rolling_quota_used
+    FROM catches c
+    WHERE fisher_id = $1`,
+    [fisherId]
+);
+```
+
+### Python Example
+```python
+from _infrastructure.connectors.python.pg_connector import PostgresConnector
+db = PostgresConnector.create('fishery_quota')
+
+violations = db.query("SELECT * FROM vw_rolling_quota WHERE quota_exceeded = true")
+```
+
+### Security Setup
+```sql
+\i ../../_infrastructure/security/00_audit_infrastructure.sql
+SELECT audit.enable_auditing('public', 'catches');
+```
+
+---
+
 *Raw SQL Vault - Project #12*

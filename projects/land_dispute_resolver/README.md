@@ -63,4 +63,49 @@ WHERE ST_Intersects(p1.geom, p2.geom)
 
 ---
 
+## 🔌 Backend Integration
+
+### Environment Variables
+```bash
+DB_HOST=localhost
+DB_PORT=6432
+DB_NAME=land_disputes
+DB_USER=app_service
+DB_PASSWORD=your_secure_password
+```
+
+### Node.js Example
+```javascript
+const { createConnector } = require('../../_infrastructure/connectors/nodejs/pg-connector');
+const db = createConnector('land_disputes');
+
+// Find overlapping parcels
+const overlaps = await db.query(`
+    SELECT p1.owner_name as owner_1, p2.owner_name as owner_2,
+           p1.plot_number, p2.plot_number,
+           ST_Area(ST_Intersection(p1.boundary, p2.boundary)) as overlap_area
+    FROM parcels p1, parcels p2
+    WHERE ST_Intersects(p1.boundary, p2.boundary)
+      AND p1.parcel_id < p2.parcel_id`,
+    []
+);
+```
+
+### Python Example
+```python
+from _infrastructure.connectors.python.pg_connector import PostgresConnector
+db = PostgresConnector.create('land_disputes')
+
+overlaps = db.query("SELECT * FROM vw_overlapping_parcels WHERE overlap_percentage > 5")
+```
+
+### Security Setup
+```sql
+\i ../../_infrastructure/security/00_audit_infrastructure.sql
+SELECT audit.enable_auditing('public', 'parcels');
+SELECT audit.enable_auditing('public', 'disputes');
+```
+
+---
+
 *Raw SQL Vault - Project #14*

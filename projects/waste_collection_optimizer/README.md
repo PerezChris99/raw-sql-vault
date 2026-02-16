@@ -75,4 +75,55 @@ ORDER BY COUNT(*) DESC;
 
 ---
 
+## 🔌 Backend Integration
+
+### Environment Variables
+```bash
+DB_HOST=localhost
+DB_PORT=6432
+DB_NAME=waste_collection
+DB_USER=app_service
+DB_PASSWORD=your_secure_password
+```
+
+### Node.js Example
+```javascript
+const { createConnector } = require('../../_infrastructure/connectors/nodejs/pg-connector');
+const db = createConnector('waste_collection');
+
+// Get urgent routes using CTE pattern
+const urgentRoutes = await db.query(`
+    WITH full_bins AS (
+        SELECT * FROM bins WHERE current_level > $1
+    )
+    SELECT r.route_id, r.route_name, COUNT(fb.bin_id) as urgent_bins
+    FROM full_bins fb
+    JOIN routes r ON fb.route_id = r.route_id
+    GROUP BY r.route_id, r.route_name
+    ORDER BY urgent_bins DESC`,
+    [80]  // threshold
+);
+```
+
+### Python Example
+```python
+from _infrastructure.connectors.python.pg_connector import PostgresConnector
+db = PostgresConnector.create('waste_collection')
+
+urgent = db.query("""
+    WITH full_bins AS (SELECT * FROM bins WHERE current_level > %s)
+    SELECT route_id, COUNT(*) as urgent FROM full_bins GROUP BY route_id
+""", [80])
+```
+
+### Security Setup
+```sql
+\i ../../_infrastructure/security/00_audit_infrastructure.sql
+\i ../../_infrastructure/security/01_rbac_roles.sql
+SELECT audit.enable_auditing('public', 'bins');
+SELECT audit.enable_auditing('public', 'collections');
+```
+
+---
+
 *Raw SQL Vault - Project #10*

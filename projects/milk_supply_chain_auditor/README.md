@@ -68,3 +68,59 @@ WITH RECURSIVE recall_trace AS (
 )
 SELECT * FROM recall_trace;
 ```
+
+---
+
+## 🔌 Backend Integration
+
+### Environment Variables
+```bash
+DB_HOST=localhost
+DB_PORT=6432
+DB_NAME=milk_supply
+DB_USER=app_service
+DB_PASSWORD=your_secure_password
+```
+
+### Node.js Example
+```javascript
+const { createConnector } = require('../../_infrastructure/connectors/nodejs/pg-connector');
+const db = createConnector('milk_supply');
+
+// Trace batch to origin
+const traceOrigin = await db.query(
+    'SELECT * FROM fn_trace_to_origin($1)',
+    [batchId]
+);
+
+// Forward trace for recalls
+const affectedBatches = await db.query(
+    'SELECT * FROM fn_trace_forward($1)',
+    [contaminatedBatchId]
+);
+
+// Check contamination in chain
+const contamination = await db.query(
+    'SELECT * FROM fn_check_contamination_chain($1)',
+    [batchId]
+);
+```
+
+### Python Example
+```python
+from _infrastructure.connectors.python.pg_connector import PostgresConnector
+db = PostgresConnector.create('milk_supply')
+
+# Full chain trace
+chain = db.query('SELECT * FROM fn_trace_to_origin(%s)', [batch_id])
+
+# Recall scenario
+affected = db.query('SELECT * FROM fn_trace_forward(%s)', [contaminated_batch])
+```
+
+### Security Setup
+```sql
+\i ../../_infrastructure/security/00_audit_infrastructure.sql
+SELECT audit.enable_auditing('public', 'batches');
+SELECT audit.enable_auditing('public', 'batch_tests');
+```

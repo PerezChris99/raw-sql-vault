@@ -64,4 +64,57 @@ GROUP BY district;
 
 ---
 
+## 🔌 Backend Integration
+
+### Environment Variables
+```bash
+DB_HOST=localhost
+DB_PORT=6432
+DB_NAME=boda_accidents
+DB_USER=app_service
+DB_PASSWORD=your_secure_password
+```
+
+### Node.js Example
+```javascript
+const { createConnector } = require('../../_infrastructure/connectors/nodejs/pg-connector');
+const db = createConnector('boda_accidents');
+
+// Get risk quartiles by district
+const riskReport = await db.query(`
+    SELECT district, accidents, 
+           NTILE(4) OVER (ORDER BY accidents) as risk_quartile
+    FROM (
+        SELECT d.district_name as district, COUNT(*) as accidents
+        FROM accidents a
+        JOIN districts d ON a.district_id = d.district_id
+        GROUP BY d.district_name
+    ) sub
+    ORDER BY risk_quartile DESC, accidents DESC`,
+    []
+);
+```
+
+### Python Example
+```python
+from _infrastructure.connectors.python.pg_connector import PostgresConnector
+db = PostgresConnector.create('boda_accidents')
+
+risk = db.query("""
+    SELECT district_name, COUNT(*) as accidents,
+           NTILE(4) OVER (ORDER BY COUNT(*)) as risk_quartile
+    FROM accidents a JOIN districts d ON a.district_id = d.district_id
+    GROUP BY district_name
+""")
+```
+
+### Security Setup
+```sql
+\i ../../_infrastructure/security/00_audit_infrastructure.sql
+\i ../../_infrastructure/security/01_rbac_roles.sql
+SELECT audit.enable_auditing('public', 'accidents');
+```
+
+---
+
 *Raw SQL Vault - Project #11*

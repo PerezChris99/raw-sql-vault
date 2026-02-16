@@ -151,6 +151,175 @@ refugee_aid_allocator/
 .\scripts\run_report.ps1 gaps
 ```
 
+---
+
+## 🔌 Backend Integration (Production)
+
+This system is designed for **plug-and-play** integration with any backend framework.
+
+### Environment Setup
+
+```bash
+# .env file
+DB_HOST=localhost
+DB_PORT=6432          # PgBouncer port (or 5432 direct)
+DB_NAME=refugee_aid
+DB_USER=app_service
+DB_PASSWORD=your_secure_password
+DB_SSL=true
+DB_POOL_MAX=20
+```
+
+### Node.js Integration
+
+```javascript
+// Install: npm install pg
+const { createConnector } = require('../../_infrastructure/connectors/nodejs/pg-connector');
+
+const db = createConnector('refugee_aid');
+
+// Get priority queue (parameterized - SQL injection safe)
+async function getPriorityQueue(campId, limit = 50) {
+    return await db.query(
+        `SELECT r.refugee_id, r.name, n.need_score,
+                RANK() OVER (ORDER BY n.need_score DESC) as priority
+         FROM refugees r
+         JOIN needs n ON r.refugee_id = n.refugee_id
+         WHERE r.camp_id = $1 AND n.status = 'pending'
+         ORDER BY priority
+         LIMIT $2`,
+        [campId, limit],
+        { tenantId: 'org-123', userId: 'system' }  // For RLS
+    );
+}
+
+// Allocate aid (transaction)
+async function allocateAid(needId, quantity, userId) {
+    return await db.transaction(async (client) => {
+        // Check availability
+        const need = await client.query(
+            'SELECT * FROM needs WHERE need_id = $1 FOR UPDATE', [needId]
+        );
+        
+        // Create allocation
+        await client.query(
+            `INSERT INTO allocations (need_id, quantity, allocated_by)
+             VALUES ($1, $2, $3)`,
+            [needId, quantity, userId]
+        );
+        
+        // Update need status
+        await client.query(
+            'UPDATE needs SET status = $1 WHERE need_id = $2',
+            ['allocated', needId]
+        );
+        
+        return { success: true };
+    }, { userId });
+}
+```
+
+### Python Integration
+
+```python
+# Install: pip install psycopg2-binary
+from _infrastructure.connectors.python.pg_connector import PostgresConnector
+
+db = PostgresConnector.create('refugee_aid')
+
+# Get priority queue
+def get_priority_queue(camp_id: int, limit: int = 50):
+    return db.query(
+        """SELECT r.refugee_id, r.name, n.need_score,
+                  RANK() OVER (ORDER BY n.need_score DESC) as priority
+           FROM refugees r
+           JOIN needs n ON r.refugee_id = n.refugee_id
+           WHERE r.camp_id = %s AND n.status = 'pending'
+           ORDER BY priority
+           LIMIT %s""",
+        [camp_id, limit],
+        context={'tenant_id': 'org-123', 'user_id': 'system'}
+    )
+
+# Allocate aid (transaction)
+def allocate_aid(need_id: int, quantity: int, user_id: str):
+    with db.transaction(context={'user_id': user_id}) as cursor:
+        cursor.execute('SELECT * FROM needs WHERE need_id = %s FOR UPDATE', [need_id])
+        cursor.execute(
+            'INSERT INTO allocations (need_id, quantity, allocated_by) VALUES (%s, %s, %s)',
+            [need_id, quantity, user_id]
+        )
+        cursor.execute('UPDATE needs SET status = %s WHERE need_id = %s', ['allocated', need_id])
+    return {'success': True}
+```
+
+### REST API Example (Express.js)
+
+```javascript
+const express = require('express');
+const { createConnector } = require('../../_infrastructure/connectors/nodejs/pg-connector');
+
+const app = express();
+const db = createConnector('refugee_aid');
+
+// GET /api/camps/:campId/priority-queue
+app.get('/api/camps/:campId/priority-queue', async (req, res) => {
+    try {
+        const queue = await db.query(
+            `SELECT r.refugee_id, r.name, n.need_score,
+                    RANK() OVER (ORDER BY n.need_score DESC) as priority
+             FROM refugees r
+             JOIN needs n ON r.refugee_id = n.refugee_id
+             WHERE r.camp_id = $1 AND n.status = 'pending'
+             ORDER BY priority LIMIT 100`,
+            [req.params.campId],
+            { tenantId: req.headers['x-tenant-id'], userId: req.user?.id }
+        );
+        res.json(queue);
+    } catch (error) {
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+// Health check
+app.get('/health', async (req, res) => {
+    const health = await db.healthCheck();
+    res.status(health.healthy ? 200 : 503).json(health);
+});
+```
+
+### Security Features (Built-in)
+
+| Feature | Description |
+|---------|-------------|
+| **SQL Injection Prevention** | All queries use parameterization (`$1, $2` or `%s`) |
+| **Row-Level Security** | Set `tenantId`/`userId` context for automatic data isolation |
+| **Rate Limiting** | 100 requests/minute per user (configurable) |
+| **Connection Pooling** | Via PgBouncer (6432) or native pool |
+| **Audit Logging** | All writes logged to `audit.activity_log` |
+| **Retry Logic** | Automatic retry on transient failures |
+
+### Applying Production Security
+
+```sql
+-- Run these once after schema creation
+\i ../../_infrastructure/security/00_audit_infrastructure.sql
+\i ../../_infrastructure/security/01_rbac_roles.sql
+\i ../../_infrastructure/security/02_row_level_security.sql
+\i ../../_infrastructure/security/03_input_sanitization.sql
+\i ../../_infrastructure/security/04_rate_limiting.sql
+
+-- Enable auditing on tables
+SELECT audit.enable_auditing('public', 'refugees');
+SELECT audit.enable_auditing('public', 'needs');
+SELECT audit.enable_auditing('public', 'allocations');
+
+-- Grant permissions to application role
+SELECT security.grant_standard_permissions('public');
+```
+
+---
+
 ## Reports
 
 1. **Priority Queue** - Ranked list of refugees awaiting aid
