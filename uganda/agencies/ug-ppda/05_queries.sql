@@ -4,7 +4,7 @@ SELECT * FROM ppda_demo.v_procurement_pipeline ORDER BY plan_ref;
 -- 02 Milestone exceptions.
 SELECT * FROM ppda_demo.v_milestone_exceptions ORDER BY due_date;
 -- 03 Contract value by entity reference.
-SELECT entity_ref,SUM(contract_value_ugx) FROM ppda_demo.v_milestone_status GROUP BY entity_ref;
+SELECT p.entity_ref,SUM(c.contract_value_ugx) FROM ppda_demo.contracts c JOIN ppda_demo.tenders t USING(tender_id) JOIN ppda_demo.procurement_plans p USING(plan_id) GROUP BY p.entity_ref;
 -- 04 Contracts approaching end date.
 SELECT contract_ref,end_date FROM ppda_demo.contracts WHERE contract_status='active' AND end_date<CURRENT_DATE+60 ORDER BY end_date;
 -- 05 Tender close dates already passed while still advertised.
