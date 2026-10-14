@@ -15,13 +15,15 @@ GRANT SELECT ON ug_permit.permit_types,ug_permit.v_application_queue,ug_permit.v
 GRANT SELECT ON ug_permit.applications,ug_permit.application_events,ug_permit.application_documents
 TO ug_permit_clerk,ug_permit_decider;
 GRANT SELECT ON ug_permit.fee_events TO ug_permit_clerk;
-GRANT INSERT ON ug_permit.application_documents TO ug_permit_clerk;
 GRANT INSERT ON ug_permit.fee_events TO ug_permit_clerk;
 GRANT EXECUTE ON FUNCTION ug_permit.fn_record_document(TEXT,TEXT,TEXT,TEXT,TEXT,TEXT) TO ug_permit_clerk;
 GRANT EXECUTE ON FUNCTION ug_permit.fn_transition_application(TEXT,TEXT,TEXT,TEXT,TEXT) TO ug_permit_clerk,ug_permit_decider;
 REVOKE ALL ON FUNCTION ug_permit.fn_transition_application(TEXT,TEXT,TEXT,TEXT,TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION ug_permit.fn_record_document(TEXT,TEXT,TEXT,TEXT,TEXT,TEXT) FROM PUBLIC;
 REVOKE ALL ON ALL SEQUENCES IN SCHEMA ug_permit FROM PUBLIC;
+GRANT USAGE,SELECT ON ALL SEQUENCES IN SCHEMA ug_permit TO ug_permit_clerk;
 -- Provision real user memberships separately. Runtime identities must not own the schema.
--- A production decision role should be granted transition execution only through an approved
--- deployment-specific grant strategy; this demo function still validates state and evidence.
+-- Both SECURITY DEFINER functions must remain owned by a trusted schema owner. The schema
+-- is not writable by runtime roles, and each function fixes search_path to pg_catalog,ug_permit.
+-- Human decision authority is still an application-level assignment/policy that this SQL demo
+-- does not model; do not grant decision execution without office-specific authorization controls.
