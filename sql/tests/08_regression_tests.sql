@@ -89,6 +89,16 @@ BEGIN
         NULL; -- Expected validation error.
     END;
 
-    RAISE NOTICE 'PASS: six correctness patterns and negative input case';
+    BEGIN
+        PERFORM * FROM vault_demo.fn_insert_users_batch(
+            ARRAY['Synthetic Duplicate A', 'Synthetic Duplicate B'],
+            ARRAY['repeat@example.test', 'REPEAT@example.test']
+        );
+        RAISE EXCEPTION 'ASSERT repeated normalized email was not rejected';
+    EXCEPTION WHEN unique_violation THEN
+        NULL; -- Expected: ambiguous duplicate identities are rejected atomically.
+    END;
+
+    RAISE NOTICE 'PASS: six correctness patterns and negative input and duplicate identity cases';
 END;
 $test$;
