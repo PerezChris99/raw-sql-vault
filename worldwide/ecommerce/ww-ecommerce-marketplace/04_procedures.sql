@@ -30,8 +30,11 @@ BEGIN
        OR p_idempotency_key IS NULL THEN
         RAISE EXCEPTION 'customer, currency and idempotency key are required' USING ERRCODE = '22023';
     END IF;
-    IF jsonb_typeof(p_items) IS DISTINCT FROM 'array' OR jsonb_array_length(p_items) = 0 THEN
-        RAISE EXCEPTION 'items must be a non-empty JSON array' USING ERRCODE = '22023';
+    IF jsonb_typeof(p_items) IS DISTINCT FROM 'array' THEN
+        RAISE EXCEPTION 'items must be a JSON array' USING ERRCODE = '22023';
+    END IF;
+    IF jsonb_array_length(p_items) = 0 THEN
+        RAISE EXCEPTION 'items array must not be empty' USING ERRCODE = '22023';
     END IF;
     IF EXISTS (
         SELECT 1 FROM jsonb_array_elements(p_items) AS e(item)
