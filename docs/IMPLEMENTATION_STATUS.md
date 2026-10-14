@@ -12,7 +12,7 @@ The repository now contains more than the original five-package implementation s
 | Phase | Confirmed implementation examples | Current assessment |
 |---|---|---|
 | 0 — Blueprint | README, master index, conventions, roadmap, contributor workflow, production standards, audit/status documents | Documentation baseline exists; continue maintaining consistency and validation evidence |
-| 1 — Uganda central government | OPM-style programme-action pattern; road asset inspection/work orders; water-point observation/maintenance; essential-medicine stock and expiry | Representative synthetic packages exist; target-engine execution has not been confirmed |
+| 1 — Uganda central government | Road work orders; water-point maintenance; medicine stock/expiry; cold-chain excursions and maintenance; clinic appointment scheduling; scholarship/bursary workflow; market-price collection and review | Additional synthetic domain packages merged through reviewed PRs; target-engine execution has not been confirmed |
 | 2 — Agencies and local government | Local service-request tracker; city asset and maintenance register; effective-dated administrative geography reference; permit/licence case workflow | Additional synthetic packages merged through reviewed PRs; wider agency coverage remains incomplete and SQL execution is unconfirmed |
 | 3 — Uganda private sector/NGO | SME stock-movement ledger; SME retail POS, sales and returns; cooperative produce delivery and payment allocation ledger | Representative synthetic packages exist; cooperative settlement is a teaching model, not a banking/accounting system; SQL execution is unconfirmed |
 | 4 — Worldwide domains | E-commerce checkout/order lifecycle | Representative package exists; no payment processing or production conformance claim; SQL execution is unconfirmed |
@@ -25,6 +25,10 @@ The repository now contains more than the original five-package implementation s
 - `uganda/central-government/ug-m-works-transport/`: synthetic road asset inspection and work-order register.
 - `uganda/central-government/ug-m-water-environment/`: synthetic water-point observation and maintenance register.
 - `uganda/central-government/ug-m-health/`: essential-medicine batch, stock-movement, expiry and guarded issue/receipt demonstrator. It contains no patient or prescription data and is not connected to live HMIS, NDA or NMS systems.
+- `uganda/central-government/ug-cold-chain-monitor/`: temperature readings, calibration snapshots, excursion queue and maintenance work orders; no patient or vaccine-batch data.
+- `uganda/central-government/ug-clinic-appointment-planner/`: synthetic appointment slots, conflict-safe bookings, cancellation history and aggregate clinic load; no clinical records.
+- `uganda/central-government/ug-scholarship-bursary-workflow/`: application review, appeal handling and award-ceiling disbursement records using opaque student references.
+- `uganda/central-government/ug-market-price-validation/`: sourced synthetic commodity-price observations, human review and candidate outlier reports; no official prices loaded.
 - The programme-action register is described in prior implementation notes; verify its current file inventory before treating it as a complete package.
 
 ### Phase 2 — Local government
@@ -65,7 +69,7 @@ The repository also contains focused examples for canonical sales policy, inclus
 
 ## Git status and delivery discipline
 
-The root README was previously merged through PR #31. Uganda implementation units were merged separately through PR #33 (administrative geography), PR #34 (permit/licence workflow), PR #35 (permit workflow hardening), and PR #36 (cooperative produce settlement). After each merge, `perez` was synchronized to `main`; at the latest check they were identical with zero commits ahead or behind. SQL execution remains unverified.
+The root README was previously merged through PR #31. Recent Uganda units were merged separately through PR #33 (administrative geography), PR #34 (permit/licence workflow), PR #35 (permit workflow hardening), PR #36 (cooperative produce settlement), PR #37 (inventory documentation), PR #38 (market-price validation), PR #39 (cold-chain monitoring), PR #40 (scholarship/bursary workflow), and PR #41 (clinic appointment planner). After each code merge, `perez` was synchronized to `main`; the latest check found them identical with zero commits ahead or behind. SQL execution remains unverified.
 
 Continue using the two-branch policy in `CONTRIBUTING.md`: one coherent package per change, detailed commit message, PR from `perez` to `main`, no force-push/rebase of `main`, and post-merge reachability checks. Do not create CI workflows.
 
