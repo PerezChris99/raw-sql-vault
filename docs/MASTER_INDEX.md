@@ -416,3 +416,16 @@ Source: [Government Media Centre — Ministries of the Republic](https://mediace
 | 116 | `ug-unbs` | Uganda National Bureau of Standards |
 
 The official-directory snapshot intentionally coexists with the sector catalogue above: one index row describes an organisation/portfolio, another describes a reusable problem domain. They are different dimensions and must not be conflated.
+
+
+## 10. Newly merged Uganda implementation packages
+
+The following package paths are present in the repository. They are synthetic reference implementations, not official systems, and SQL execution is not yet verified unless a separate test run is recorded.
+
+| Package path | Capability | Validation status |
+|---|---|---|
+| `uganda/local-government/ug-administrative-geography/` | Effective-dated administrative hierarchy, allowed parent-level edges, synthetic fixtures, ancestry queries and steward audit metadata | Implemented; authoritative real-world reference data not loaded; SQL tests not run |
+| `uganda/local-government/ug-permit-licence-workflow/` | Permit/licence application state transitions, evidence-backed human decisions, document metadata, fee events and reporting | Implemented; legal workflow and issuing-office rules require validation; SQL tests not run |
+| `uganda/private-and-ngo/ug-coop-produce-payment-ledger/` | Produce deliveries, sourced effective-dated rates, approved deductions and bounded payment allocations | Implemented as a synthetic teaching model; independent accounting/security review and SQL tests remain pending |
+
+These additions do not complete the Uganda checklist. Existing roadmap candidates and indexed organisations must still be reconciled one by one against actual package files and validation evidence. Do not equate catalogue coverage with implementation coverage.

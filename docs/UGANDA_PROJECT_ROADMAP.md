@@ -100,7 +100,7 @@ Every implementation should include a problem statement, named user roles, data 
 - [ ] Retention, export, correction, and deletion rules documented.
 - [ ] Query plans measured on representative synthetic data.
 - [ ] Backup restoration and operational recovery tested.
-- [ ] CI checks pass; changes merged through a reviewed PR.
+- [ ] Approved local/manual checks pass and their actual output is recorded; changes merged through a reviewed PR. Do not add CI workflows under repository owner policy.
 - [ ] Baseline and outcome measures documented without inventing impact figures.
 
 ## Uganda-specific deployment considerations
