@@ -19,6 +19,18 @@ CREATE TABLE IF NOT EXISTS tenant_demo.invoices (
 CREATE INDEX IF NOT EXISTS ix_invoices_tenant_id
     ON tenant_demo.invoices(tenant_id);
 
+DO $roles$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'tenant_demo_reader') THEN
+        CREATE ROLE tenant_demo_reader NOLOGIN;
+    END IF;
+END;
+$roles$;
+
+REVOKE ALL ON SCHEMA tenant_demo FROM PUBLIC;
+GRANT USAGE ON SCHEMA tenant_demo TO tenant_demo_reader;
+GRANT SELECT ON tenant_demo.invoices TO tenant_demo_reader;
+
 ALTER TABLE tenant_demo.invoices ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tenant_demo.invoices FORCE ROW LEVEL SECURITY;
 
