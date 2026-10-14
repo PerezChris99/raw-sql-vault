@@ -288,3 +288,131 @@ Every implementation should register:
 - status: `planned`, `discovery`, `in_progress`, `review`, `implemented`, `retired`.
 
 No index row implies endorsement, access permission, completeness of source data, or production readiness.
+
+
+## 9. Government directory snapshot — 116 listed entries
+
+The Government Media Centre directory was reviewed on 14 October 2026 and stated that it lists **116 ministries and agencies**. The 116 slugs below map its displayed entries in page order, including offices, regional portfolios, commissions, statutory bodies, public corporations and other listed organisations. This is a catalogue snapshot, not a legal opinion or proof that every entry has independent ministry status. Confirm the legal name, current mandate, parent and operational status with the responsible authority before implementation. The directory itself may change.
+
+Source: [Government Media Centre — Ministries of the Republic](https://mediacentre.go.ug/ministries). Cross-check central-government portfolio relationships against [State House — The Cabinet](https://statehouse.go.ug/the-cabinet/) and [Parliament of Uganda — Cabinet members and Ministers of State](https://web.parliament.go.ug/page/cabinet-members-and-ministers-state).
+
+| Directory order | Stable slug | Directory display name |
+|---:|---|---|
+| 1 | `ug-kiswahili-language-office` | Dawati La Kiswahili Coordinator's Office |
+| 2 | `ug-kcca` | Kampala Capital City Authority |
+| 3 | `ug-p-karamoja-affairs` | Ministry for Karamoja Affairs |
+| 4 | `ug-p-northern-uganda` | Ministry for Northern Uganda |
+| 5 | `ug-m-aaiif` | Ministry of Agriculture, Animal Industry & Fisheries |
+| 6 | `ug-m-defence-veterans` | Ministry of Defence and Veteran Affairs |
+| 7 | `ug-p-disaster-preparedness` | Ministry of Disaster Preparedness |
+| 8 | `ug-m-eac-affairs` | Ministry of East African Community Affairs |
+| 9 | `ug-m-education-sports` | Ministry of Education and Sports |
+| 10 | `ug-m-energy-minerals` | Ministry of Energy and Mineral Development |
+| 11 | `ug-m-finance-planning` | Ministry of Finance, Planning & Economic Development |
+| 12 | `ug-m-foreign-affairs` | Ministry of Foreign Affairs |
+| 13 | `ug-m-gender-labour-social` | Ministry of Gender, Labour & Social Development |
+| 14 | `ug-m-health` | Ministry of Health |
+| 15 | `ug-m-ict-national-guidance` | Ministry of ICT and National Guidance |
+| 16 | `ug-m-internal-affairs` | Ministry of Internal Affairs |
+| 17 | `ug-m-justice-constitutional` | Ministry of Justice & Constitutional Affairs |
+| 18 | `ug-m-lands-housing-urban` | Ministry of Lands, Housing & Urban Development |
+| 19 | `ug-m-local-government` | Ministry of Local Government |
+| 20 | `ug-m-public-service` | Ministry of Public Service |
+| 21 | `ug-p-refugee-affairs` | Ministry of Refugees & OPM Refugees Department |
+| 22 | `ug-m-science-tech-innovation` | Ministry of Science, Technology & Innovation |
+| 23 | `ug-m-tourism-wildlife-antiquities` | Ministry of Tourism, Wildlife and Antiquities |
+| 24 | `ug-m-trade-industry-coops` | Ministry of Trade, Industry & Cooperatives |
+| 25 | `ug-m-water-environment` | Ministry of Water and Environment |
+| 26 | `ug-m-works-transport` | Ministry of Works and Transport |
+| 27 | `ug-op` | Office of the President |
+| 28 | `ug-opm` | Office of the Prime Minister |
+| 29 | `ug-ovp` | Office of the Vice President |
+| 30 | `ug-state-house` | State House |
+| 31 | `ug-m-kampala-metropolitan` | Ministry of Kampala Capital City and Metropolitan Affairs |
+| 32 | `ug-parliament` | Parliament of Uganda |
+| 33 | `ug-judiciary` | The Judiciary |
+| 34 | `ug-umc` | Uganda Media Centre |
+| 35 | `ug-ucc` | Uganda Communications Commission |
+| 36 | `ug-nita-u` | National Information Technology Authority – Uganda |
+| 37 | `ug-ubc` | Uganda Broadcasting Corporation |
+| 38 | `ug-vision-group` | Vision Group / New Vision |
+| 39 | `ug-uppc` | Uganda Printing and Publishing Corporation |
+| 40 | `ug-uict` | Uganda Institute of Information and Communications Technology |
+| 41 | `ug-posta` | Posta Uganda |
+| 42 | `ug-media-council` | Media Council of Uganda |
+| 43 | `ug-utl-legacy` | Uganda Telecommunications Limited |
+| 44 | `ug-ura` | Uganda Revenue Authority |
+| 45 | `ug-bou` | Bank of Uganda |
+| 46 | `ug-npa` | National Planning Authority |
+| 47 | `ug-ubos` | Uganda Bureau of Statistics |
+| 48 | `ug-ppda` | Public Procurement and Disposal of Public Assets Authority |
+| 49 | `ug-uia` | Uganda Investment Authority |
+| 50 | `ug-udb` | Uganda Development Bank |
+| 51 | `ug-udc` | Uganda Development Corporation |
+| 52 | `ug-fia` | Financial Intelligence Authority |
+| 53 | `ug-cma` | Capital Markets Authority |
+| 54 | `ug-ira` | Insurance Regulatory Authority of Uganda |
+| 55 | `ug-urbra` | Uganda Retirement Benefits Regulatory Authority |
+| 56 | `ug-nssf` | National Social Security Fund |
+| 57 | `ug-msc` | Microfinance Support Centre |
+| 58 | `ug-tat` | Tax Appeals Tribunal |
+| 59 | `ug-oag` | Office of the Auditor General |
+| 60 | `ug-uepb` | Uganda Export Promotion Board |
+| 61 | `ug-nwsc` | National Water and Sewerage Corporation |
+| 62 | `ug-unra` | Uganda National Roads Authority |
+| 63 | `ug-urf` | Uganda Road Fund |
+| 64 | `ug-ucaa` | Uganda Civil Aviation Authority |
+| 65 | `ug-urc` | Uganda Railways Corporation |
+| 66 | `ug-uegcl` | Uganda Electricity Generation Company Limited |
+| 67 | `ug-uetcl` | Uganda Electricity Transmission Company Limited |
+| 68 | `ug-uedcl` | Uganda Electricity Distribution Company Limited |
+| 69 | `ug-era` | Electricity Regulatory Authority |
+| 70 | `ug-pau` | Petroleum Authority of Uganda |
+| 71 | `ug-unoc` | Uganda National Oil Company |
+| 72 | `ug-nema` | National Environment Management Authority |
+| 73 | `ug-nfa` | National Forestry Authority |
+| 74 | `ug-unma` | Uganda National Meteorological Authority |
+| 75 | `ug-updf` | Uganda Peoples' Defence Forces |
+| 76 | `ug-upf` | Uganda Police Force |
+| 77 | `ug-ups` | Uganda Prisons Service |
+| 78 | `ug-iso` | Internal Security Organisation |
+| 79 | `ug-eso` | External Security Organisation |
+| 80 | `ug-dcic` | Directorate of Citizenship and Immigration Control |
+| 81 | `ug-nira` | National Identification and Registration Authority |
+| 82 | `ug-ursb` | Uganda Registration Services Bureau |
+| 83 | `ug-ig` | Inspectorate of Government |
+| 84 | `ug-dpp` | Directorate of Public Prosecutions |
+| 85 | `ug-uhrc` | Uganda Human Rights Commission |
+| 86 | `ug-jsc` | Judicial Service Commission |
+| 87 | `ug-psc` | Public Service Commission |
+| 88 | `ug-hsc` | Health Service Commission |
+| 89 | `ug-esc` | Education Service Commission |
+| 90 | `ug-eoc` | Equal Opportunities Commission |
+| 91 | `ug-dei` | Directorate of Ethics and Integrity |
+| 92 | `ug-ldc` | Law Development Centre |
+| 93 | `ug-ulrc` | Uganda Law Reform Commission |
+| 94 | `ug-ec` | Electoral Commission |
+| 95 | `ug-ulc` | Uganda Land Commission |
+| 96 | `ug-lgfc` | Local Government Finance Commission |
+| 97 | `ug-ngo-bureau` | National Bureau for Non-Governmental Organisations |
+| 98 | `ug-nms` | National Medical Stores |
+| 99 | `ug-ubts` | Uganda Blood Transfusion Service |
+| 100 | `ug-uci` | Uganda Cancer Institute |
+| 101 | `ug-uhi` | Uganda Heart Institute |
+| 102 | `ug-nda` | National Drug Authority |
+| 103 | `ug-uac` | Uganda AIDS Commission |
+| 104 | `ug-uneb` | Uganda National Examinations Board |
+| 105 | `ug-ncdc` | National Curriculum Development Centre |
+| 106 | `ug-nche` | National Council for Higher Education |
+| 107 | `ug-ncs` | National Council of Sports |
+| 108 | `ug-umi` | Uganda Management Institute |
+| 109 | `ug-naro` | National Agricultural Research Organisation |
+| 110 | `ug-naads` | National Agricultural Advisory Services |
+| 111 | `ug-ucda` | Uganda Coffee Development Authority |
+| 112 | `ug-dda` | Dairy Development Authority |
+| 113 | `ug-cdo` | Cotton Development Organisation |
+| 114 | `ug-uwa` | Uganda Wildlife Authority |
+| 115 | `ug-utb` | Uganda Tourism Board |
+| 116 | `ug-unbs` | Uganda National Bureau of Standards |
+
+The official-directory snapshot intentionally coexists with the sector catalogue above: one index row describes an organisation/portfolio, another describes a reusable problem domain. They are different dimensions and must not be conflated.
