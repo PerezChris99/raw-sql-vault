@@ -20,11 +20,14 @@ REVOKE ALL ON SCHEMA analytics_demo FROM PUBLIC;
 GRANT USAGE ON SCHEMA analytics_demo TO analytics_demo_pipeline, analytics_demo_analyst, analytics_demo_feature_reader;
 REVOKE ALL ON ALL TABLES IN SCHEMA analytics_demo FROM PUBLIC;
 GRANT SELECT ON ALL TABLES IN SCHEMA analytics_demo TO analytics_demo_analyst;
+REVOKE SELECT ON analytics_demo.staging_sales FROM analytics_demo_analyst;
+REVOKE SELECT ON analytics_demo.feature_registry, analytics_demo.feature_values FROM analytics_demo_analyst;
 GRANT SELECT ON analytics_demo.feature_registry, analytics_demo.feature_values TO analytics_demo_feature_reader;
 GRANT SELECT ON analytics_demo.dim_dates, analytics_demo.dim_products, analytics_demo.dim_locations,
     analytics_demo.staging_sales TO analytics_demo_pipeline;
 GRANT INSERT, UPDATE ON analytics_demo.dim_dates TO analytics_demo_pipeline;
 GRANT INSERT ON analytics_demo.fact_sales TO analytics_demo_pipeline;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA analytics_demo TO analytics_demo_pipeline;
 GRANT EXECUTE ON FUNCTION analytics_demo.fn_load_sales_batch(UUID) TO analytics_demo_pipeline;
 GRANT EXECUTE ON FUNCTION analytics_demo.fn_features_as_of(TEXT, TEXT, TIMESTAMPTZ)
     TO analytics_demo_feature_reader;
