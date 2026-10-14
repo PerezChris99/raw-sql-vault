@@ -59,8 +59,8 @@ Includes staging quality checks, idempotent fact loading, dimension keys and fea
 ## Validation evidence and blockers
 
 - The branch comparison previously showed `perez` ahead of `main` with no behind commits.
-- CI workflow exists and was triggered, but a run completed as failed in approximately three seconds with `runner_id=0` and no reported steps. The GitHub connector could not retrieve its log/annotations, so the underlying cause is unconfirmed. A subsequent workflow edit fixed direct execution of a non-executable shell script by invoking it through bash.
-- The integrated regression suite has **not been confirmed passing**. This environment did not have psql, a PostgreSQL server or Docker available, and network package installation did not complete. Do not state that SQL tests passed until GitHub Actions or a local Postgres/PostGIS run proves it.
+- The GitHub Actions workflow has been removed at the repository owner's explicit request. Prior runs completed almost immediately with `runner_id=0`, no reported steps and skipped database jobs; the evidence points to hosted-runner allocation/initialization failure rather than a reported SQL assertion failure, but the underlying infrastructure cause was not exposed in available logs.
+- The integrated regression suite has **not been confirmed passing**. Local execution was unavailable in this environment. Run `bash tools/lint_sql.sh` and the SQL suite against a disposable PostgreSQL 15+ / PostGIS database when available. No CI workflow currently performs these checks.
 - Package examples are committed, but not every indexed ministry, agency, local council, sector or worldwide domain has its own implementation. The master index is a catalogue, not 116 independent delivered systems.
 - MySQL 8 and SQL Server 2019 variants have not been implemented/tested for these representative packages.
 - Repository commit metadata from GitHub's commit API for the inspected CI-triggering commit did show author and committer name/email as Perez Chris / kweeziperez712@gmail.com. This is not evidence that a local Git configuration or hook is installed.
