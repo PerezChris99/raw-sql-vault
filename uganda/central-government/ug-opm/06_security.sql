@@ -18,8 +18,8 @@ REVOKE ALL ON SCHEMA opm_demo FROM PUBLIC;
 GRANT USAGE ON SCHEMA opm_demo TO opm_demo_reader, opm_demo_operator;
 REVOKE ALL ON ALL TABLES IN SCHEMA opm_demo FROM PUBLIC;
 GRANT SELECT ON ALL TABLES IN SCHEMA opm_demo TO opm_demo_reader;
-GRANT SELECT, INSERT, UPDATE ON opm_demo.programme_actions TO opm_demo_operator;
-GRANT SELECT, INSERT ON opm_demo.action_events TO opm_demo_operator;
+GRANT SELECT, INSERT ON opm_demo.programme_actions TO opm_demo_operator;
+GRANT SELECT ON opm_demo.action_events TO opm_demo_operator;
 GRANT SELECT ON opm_demo.departments TO opm_demo_operator;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA opm_demo TO opm_demo_operator;
 GRANT EXECUTE ON FUNCTION opm_demo.fn_transition_action(BIGINT, TEXT, TEXT, TEXT)
