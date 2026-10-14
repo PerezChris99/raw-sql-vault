@@ -432,3 +432,21 @@ The existing 21 lessons and 15 projects remain the core vault. These supplements
 - [GitHub Flow and commit reachability](docs/GITHUB_FLOW.md) — pull-request workflow, branch divergence checks, safe cleanup, and SQL-specific CI recommendations.
 
 **Important:** Existing modules include engine-specific examples. Check each file's declared database engine and prerequisites before running it. Examples involving money, payroll, healthcare, public benefits, legal issues, or sensitive records are educational unless independently validated and reviewed for real deployment.
+
+
+---
+
+## Autopilot implementation slice
+
+The blueprint now has representative demo packages from the initial Uganda government, local-government, private-sector, worldwide e-commerce and cross-cutting analytics phases. The indexed catalogue is wider than the implemented sample set.
+
+- [Master index](docs/MASTER_INDEX.md) — Uganda directory snapshot, agencies, local levels, sectors, worldwide domains and SDGs.
+- [Production standards](docs/PRODUCTION_STANDARDS.md) — schema, security, migration, performance and operations review gates.
+- [SQL correctness audit](docs/SQL_CORRECTNESS_AUDIT.md) — findings mapped to correction scripts and test status.
+- [Implementation status](docs/IMPLEMENTATION_STATUS.md) — package scope, validation evidence and remaining gates.
+- [Beginner curriculum supplement](docs/CURRICULUM_SUPPLEMENT.md) — prerequisites for the existing learning modules.
+- [Contribution workflow](CONTRIBUTING.md) — main/perez Git discipline.
+
+**Validation status:** The PostgreSQL/PostGIS regression suite and CI workflow have been added, but a passing end-to-end run is not yet confirmed. Do not use these synthetic examples as government-approved or production-ready systems without the testing, security/privacy review, data-owner approval and operational checks documented in the standards.
+
+The repository remains private and proprietary under its existing repository policy; no public/open-source license is implied by these additions.
