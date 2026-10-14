@@ -429,3 +429,13 @@ The following package paths are present in the repository. They are synthetic re
 | `uganda/private-and-ngo/ug-coop-produce-payment-ledger/` | Produce deliveries, sourced effective-dated rates, approved deductions and bounded payment allocations | Implemented as a synthetic teaching model; independent accounting/security review and SQL tests remain pending |
 
 These additions do not complete the Uganda checklist. Existing roadmap candidates and indexed organisations must still be reconciled one by one against actual package files and validation evidence. Do not equate catalogue coverage with implementation coverage.
+
+
+The following additional Uganda implementation packages are present on the repository's main branch. These are synthetic reference implementations, not official systems; SQL execution remains unverified until actual database output is recorded.
+
+| Package path | Capability | Status |
+|---|---|---|
+| `uganda/central-government/ug-market-price-validation/` | Sourced commodity price observations, human review, daily summaries and candidate outlier reporting | Implemented; no official price data; SQL tests not run |
+| `uganda/central-government/ug-cold-chain-monitor/` | Equipment temperature observations, calibration snapshots, excursions and maintenance work orders | Implemented; no clinical disposition logic; SQL tests not run |
+| `uganda/central-government/ug-clinic-appointment-planner/` | Slot scheduling, double-booking prevention, cancellation and appointment lifecycle | Implemented; no clinical records; concurrency tests not run |
+| `uganda/central-government/ug-scholarship-bursary-workflow/` | Application review, appeals and award-bounded disbursement recording | Implemented; opaque student references only; SQL tests not run |
