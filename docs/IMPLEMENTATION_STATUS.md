@@ -1,82 +1,75 @@
-# Autopilot Implementation Status
+# Raw SQL Vault — Implementation Status
 
-**Last reviewed:** 14 October 2026  
+**Last reviewed:** 15 October 2026  
 **Primary engine:** PostgreSQL 15+  
-**Status vocabulary:** indexed, implemented in demo form, verified, operationally approved
+**CI policy:** Do not add GitHub Actions or other repository CI workflows; the owner explicitly declined them.  
+**Status vocabulary:** indexed, designed, implemented, verified, operationally approved
 
 ## Executive status
 
-Autopilot has advanced the existing proposal into a first working library slice covering the common SQL correctness patterns and five representative end-to-end packages. The catalogue is broader than the implementation. A package being indexed or committed must not be mistaken for an implemented system, verified SQL, government endorsement, or production approval.
+The repository now contains more than the original five-package implementation slice. The README and roadmap describe the intended scope; they are not evidence that every indexed candidate exists. The packages listed below are confirmed by repository files and recent commits. **SQL execution remains unverified unless a successful run and its output are recorded.**
 
-| Phase | Scope | Delivery in this slice | Status |
-|---|---|---|---|
-| 0 | Blueprint | Master index, conventions, phased roadmap, contributor workflow, 116-entry public directory snapshot | Documents committed; review/validation ongoing |
-| 1 | Uganda central government | OPM-style programme action register (synthetic) | Demo package committed; SQL execution not yet confirmed |
-| 2 | Uganda agencies/local government | Local service request tracker (synthetic) | Demo package committed; SQL execution not yet confirmed |
-| 3 | Uganda private sector/NGO | SME stock ledger (synthetic) | Demo package committed; SQL execution not yet confirmed |
-| 4 | Worldwide domains | E-commerce checkout and order lifecycle (synthetic) | Demo package committed; SQL execution not yet confirmed |
-| 5 | Cross-cutting analytics | Staging/warehouse/feature-store example with as-of availability time | Demo package committed; SQL execution not yet confirmed |
+| Phase | Confirmed implementation examples | Current assessment |
+|---|---|---|
+| 0 — Blueprint | README, master index, conventions, roadmap, contributor workflow, production standards, audit/status documents | Documentation baseline exists; continue maintaining consistency and validation evidence |
+| 1 — Uganda central government | OPM-style programme-action pattern; road asset inspection/work orders; water-point observation/maintenance; essential-medicine stock and expiry | Representative synthetic packages exist; target-engine execution has not been confirmed |
+| 2 — Agencies and local government | Local service-request tracker; city asset and maintenance register | Representative synthetic packages exist; agency coverage remains incomplete and SQL execution is unconfirmed |
+| 3 — Uganda private sector/NGO | SME stock-movement ledger; SME retail POS, sales and returns | Representative packages exist; they are not full accounting, tax, or payment systems; SQL execution is unconfirmed |
+| 4 — Worldwide domains | E-commerce checkout/order lifecycle | Representative package exists; no payment processing or production conformance claim; SQL execution is unconfirmed |
+| 5 — Shared analytics | Warehouse ingestion and point-in-time feature-store example | Representative package exists; production lineage/governance and SQL execution remain unverified |
 
-## Shared work committed to perez
+## Confirmed package locations
 
-- SQL fixes: canonical sales policy, inclusive end-date reporting, NULL-safe scoring, calendar-time rolling revenue, PostGIS near-duplicate candidates and idempotent parameterised batch inserts.
-- Reusable patterns: cursor pagination, tenant RLS, row-change auditing, soft-delete indexing, and idempotent upsert.
-- Test fixtures and assertions; one integrated psql entry point; a PostgreSQL 15 + PostGIS GitHub Actions workflow.
-- Production standards and a beginner-to-practitioner curriculum supplement.
+### Phase 1 — Central-government and public-service examples
 
-## Packages
+- `uganda/central-government/ug-m-works-transport/`: synthetic road asset inspection and work-order register.
+- `uganda/central-government/ug-m-water-environment/`: synthetic water-point observation and maintenance register.
+- `uganda/central-government/ug-m-health/`: essential-medicine batch, stock-movement, expiry and guarded issue/receipt demonstrator. It contains no patient or prescription data and is not connected to live HMIS, NDA or NMS systems.
+- The programme-action register is described in prior implementation notes; verify its current file inventory before treating it as a complete package.
 
-### Phase 1 — OPM programme actions
+### Phase 2 — Local government
 
-Path: `uganda/central-government/ug-opm/`
+- `uganda/local-government/ug-lg-service-requests/`: locality references, service requests/events, controlled transitions and reporting.
+- `uganda/local-government/ug-city-asset-maintenance/`: synthetic municipal assets, inspections, work orders and event history.
 
-Includes schema, fictional seed data, reporting views, a row-locked workflow transition function, 20 reporting queries, sample grants/indexes and rollback-wrapped assertions.
+### Phase 3 — Private sector and NGO
 
-### Phase 2 — local service requests
+- `uganda/private-and-ngo/ug-sme-inventory/`: idempotent stock-movement ledger and underflow protection; not a full double-entry accounting ledger.
+- `uganda/private-and-ngo/ug-retail-pos/`: receipts, sale lines, stock events and guarded returns; not a full tax/payment system.
 
-Path: `uganda/local-government/ug-lg-service-requests/`
+### Phase 4 — Worldwide domains
 
-Includes effective-dated locality references, service request/events, queue and overdue reports, controlled transitions and synthetic state-machine tests.
+- `worldwide/ecommerce/ww-ecommerce-marketplace/`: idempotent checkout, atomic stock reservation, order state history and cancellation restoration; no payment/card handling.
 
-### Phase 3 — SME inventory
+### Phase 5 — Shared analytics
 
-Path: `uganda/private-and-ngo/ug-sme-inventory/`
+- `shared/analytics/ww-data-warehouse-feature-store/`: staging checks, idempotent fact loading, dimensions, and feature values constrained by event time and source-availability time.
 
-Includes a stock-movement ledger, idempotent movement function, stock-underflow protection and reorder/reporting queries. It is not a complete accounting ledger.
+## Shared SQL engineering work
 
-### Phase 4 — marketplace checkout
-
-Path: `worldwide/ecommerce/ww-ecommerce-marketplace/`
-
-Includes atomic stock reservation, idempotent checkout, status changes/cancellation stock restoration and reporting. It does not process payments, tax, refunds or card data.
-
-### Phase 5 — warehouse and feature store
-
-Path: `shared/analytics/ww-data-warehouse-feature-store/`
-
-Includes staging quality checks, idempotent fact loading, dimension keys and features constrained by both event time and source-availability time.
+The repository also contains focused examples for canonical sales policy, inclusive date-range reporting, NULL-safe scoring, calendar-time rolling revenue, PostGIS near-duplicate candidates, parameterised/idempotent batch inserts, cursor pagination, tenant RLS, row-change auditing, soft-delete indexing, and idempotent upserts. Review each script's prerequisites and test evidence before reuse.
 
 ## Validation evidence and blockers
 
-- The branch comparison previously showed `perez` ahead of `main` with no behind commits.
-- The GitHub Actions workflow has been removed at the repository owner's explicit request. Prior runs completed almost immediately with `runner_id=0`, no reported steps and skipped database jobs; the evidence points to hosted-runner allocation/initialization failure rather than a reported SQL assertion failure, but the underlying infrastructure cause was not exposed in available logs.
-- The integrated regression suite has **not been confirmed passing**. Local execution was unavailable in this environment. Run `bash tools/lint_sql.sh` and the SQL suite against a disposable PostgreSQL 15+ / PostGIS database when available. No CI workflow currently performs these checks.
-- Package examples are committed, but not every indexed ministry, agency, local council, sector or worldwide domain has its own implementation. The master index is a catalogue, not 116 independent delivered systems.
-- MySQL 8 and SQL Server 2019 variants have not been implemented/tested for these representative packages.
-- Repository commit metadata from GitHub's commit API for the inspected CI-triggering commit did show author and committer name/email as Perez Chris / kweeziperez712@gmail.com. This is not evidence that a local Git configuration or hook is installed.
-- The remote branch `docs/beginner-gap-audit-uganda-projects` remains because the available GitHub write tools do not expose branch deletion. Its commits are ancestors of `perez`; do not delete it until you verify reachability after the approved main merge.
-- No claim is made that a system is officially endorsed, legally compliant, security-certified or operationally production-ready.
+- `tools/lint_sql.sh` performs shell syntax, recursive psql include-path, and required-file inventory checks. It is not a SQL execution test.
+- `tools/run_sql_tests.sh` requires `psql`, a caller-supplied `DATABASE_URL`, and a dedicated disposable PostgreSQL/PostGIS database; it runs `sql/tests/all_packages.sql` with `ON_ERROR_STOP=1`.
+- A successful end-to-end SQL regression run has **not been confirmed** in this review. Do not mark packages verified without actual execution and reviewed output.
+- No GitHub Actions/CI workflow should be added. The former workflow was removed at the owner's request. Use approved local/manual checks and record their actual outcomes; missing output is not a pass.
+- MySQL 8 and SQL Server 2019 variants are not comprehensively implemented/tested for the representative packages. Mark any variant as unverified unless it was run on its own engine.
+- The repository contains a broad catalogue of additional ministry, agency, local-government, private/NGO, worldwide and analytical candidates. The catalogue is not 116 delivered systems.
+- The old `docs/beginner-gap-audit-uganda-projects` branch was a known extra ref. Branch cleanup must preserve commit reachability and should be done only through an explicitly available, safe operation after checking the current branch inventory.
+- No claim is made that any example is officially endorsed, legally compliant, certified, secure for live deployment, or operationally production-ready.
 
-## Merge gate
+## Git status and delivery discipline
 
-The requested next action is to merge `perez` into `main` with a detailed merge commit, then sync `perez` back to `main`. The merge must remain blocked until the failed/empty-step CI situation is resolved or a trusted equivalent validation run passes; do not silently treat missing logs as a pass.
+The professional root README was updated on `perez`, reviewed as a documentation-only PR, merged through PR #31, and `perez` was fast-forward-synchronized to the resulting `main` commit. At verification, `main` and `perez` were identical with zero commits ahead or behind.
 
-After merge, capture:
-- `git log --oneline --graph --all --decorate -20`
-- `git log main..perez` (must be empty after sync)
-- `git fsck --no-reflogs | grep dangling` (investigate every result; don't discard blindly)
-- `git branch -a` (expected to be exactly main/perez after old-branch cleanup)
+Continue using the two-branch policy in `CONTRIBUTING.md`: one coherent package per change, detailed commit message, PR from `perez` to `main`, no force-push/rebase of `main`, and post-merge reachability checks. Do not create CI workflows.
 
-## Next implementation queue
+## Next execution priorities
 
-Continue one independently reviewable package at a time, prioritising local service delivery, asset/work-order tracking, medicine stock, cooperative produce payment reconciliation, procurement milestones and authorised data-quality pipelines. Then expand central-government units portfolio by portfolio, agency units, private/NGO domains, worldwide domains and shared analytics. Every package needs schema, seeds, useful queries, security, indexes, migrations, tests and evidence from its target engine.
+1. Run static checks and the integrated SQL suite on an available, disposable PostgreSQL 15+/PostGIS environment; capture output and fix actual failures.
+2. Reconcile the package inventory against `docs/MASTER_INDEX.md` and correct stale claims.
+3. Continue missing central-government packages, then agencies/local-government, private/NGO, worldwide, and shared infrastructure in roadmap order.
+4. Keep each package self-contained with scope, ERD/data dictionary, migrations, deterministic synthetic fixtures, useful queries, least-privilege security, justified indexes, executable assertions, setup instructions and honest status.
+5. Mark a phase complete only after its agreed scope has passed the per-package gates. Operational approval additionally requires independent data-owner, security/privacy, migration, performance, monitoring and backup/restore review.
