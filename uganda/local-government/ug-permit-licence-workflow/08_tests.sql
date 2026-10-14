@@ -5,17 +5,20 @@ BEGIN;
 DO $test$
 DECLARE v_id BIGINT; v_event_count BIGINT;
 BEGIN
- SELECT application_id INTO v_id FROM ug_permit.applications WHERE application_ref='UGP-DEMO-0001';
- IF v_id IS NULL THEN RAISE EXCEPTION 'ASSERT seeded application missing'; END IF;
+ SELECT application_id INTO v_id FROM ug_permit.applications WHERE application_ref='UGP-DEMO-0002';
+ IF v_id IS NULL THEN RAISE EXCEPTION 'ASSERT seeded under-review application missing'; END IF;
 
+ -- Under-review -> approved is a valid transition, so this specifically exercises
+ -- the independent requirement for a decision evidence reference.
  BEGIN
-   PERFORM ug_permit.fn_transition_application('UGP-DEMO-0001','approved','test-reviewer','invalid direct approval',NULL);
+   PERFORM ug_permit.fn_transition_application('UGP-DEMO-0002','approved','test-reviewer','approval without evidence',NULL);
    RAISE EXCEPTION 'ASSERT approval without evidence was accepted';
  EXCEPTION WHEN check_violation THEN NULL; END;
 
+ -- Expiration is a valid target state but cannot be reached from submitted.
  BEGIN
-   PERFORM ug_permit.fn_transition_application('UGP-DEMO-0001','draft','test-reviewer','invalid backward transition',NULL);
-   RAISE EXCEPTION 'ASSERT invalid backward transition was accepted';
+   PERFORM ug_permit.fn_transition_application('UGP-DEMO-0001','expired','test-reviewer','invalid direct expiration',NULL);
+   RAISE EXCEPTION 'ASSERT invalid submitted -> expired transition was accepted';
  EXCEPTION WHEN check_violation THEN NULL; END;
 
  BEGIN
