@@ -11,7 +11,15 @@ permissions:
   contents: read
 
 jobs:
+  static-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run shell and recursive include checks
+        run: bash tools/lint_sql.sh
+
   postgres-regression:
+    needs: static-validation
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -35,7 +43,5 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y postgresql-client
-      - name: Validate test-runner shell syntax
-        run: bash -n tools/run_sql_tests.sh
       - name: Run integrated SQL regression suites
         run: bash tools/run_sql_tests.sh
