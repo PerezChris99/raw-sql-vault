@@ -4,3 +4,4 @@
 \ir ../migrations/V0001__demo_correctness_patterns.sql
 \ir 07_test_fixtures.sql
 \ir 08_regression_tests.sql
+\ir 09_reusable_patterns.sql
