@@ -81,7 +81,7 @@ BEGIN
 
     SELECT COUNT(*) INTO v_count
     FROM audit_demo.row_change_log
-    WHERE table_schema = 'audit_demo' AND table_name = 'test_records'
+    WHERE schema_name = 'audit_demo' AND table_name = 'test_records'
       AND row_key = v_id::text
       AND operation IN ('INSERT', 'UPDATE', 'DELETE');
     IF v_count <> 3 THEN
