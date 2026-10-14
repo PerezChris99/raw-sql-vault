@@ -5,10 +5,31 @@ CREATE OR REPLACE FUNCTION ug_clinic_sched.fn_book_appointment(
 ) RETURNS BIGINT
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,ug_clinic_sched
 AS $$
-DECLARE v_slot ug_clinic_sched.slots%ROWTYPE; v_id BIGINT;
+DECLARE
+ v_slot ug_clinic_sched.slots%ROWTYPE;
+ v_existing ug_clinic_sched.appointments%ROWTYPE;
+ v_id BIGINT;
 BEGIN
- IF length(btrim(COALESCE(p_patient_ref,'')))<3 OR length(btrim(COALESCE(p_recorded_by,'')))=0 THEN
-  RAISE EXCEPTION 'Opaque patient reference and recorder are required' USING ERRCODE='invalid_parameter_value';
+ IF length(btrim(COALESCE(p_idempotency_key,'')))<8
+    OR length(btrim(COALESCE(p_patient_ref,'')))<3
+    OR length(btrim(COALESCE(p_recorded_by,'')))=0
+    OR length(btrim(COALESCE(p_appointment_ref,'')))=0 THEN
+  RAISE EXCEPTION 'Appointment reference, idempotency key, opaque patient reference and recorder are required'
+    USING ERRCODE='invalid_parameter_value';
+ END IF;
+ -- Serialise retries sharing a key, even when they target different slots.
+ PERFORM pg_advisory_xact_lock(hashtextextended(p_idempotency_key,0));
+ SELECT * INTO v_existing FROM ug_clinic_sched.appointments
+ WHERE idempotency_key=p_idempotency_key FOR UPDATE;
+ IF FOUND THEN
+  IF v_existing.appointment_ref<>p_appointment_ref
+     OR v_existing.patient_ref<>p_patient_ref
+     OR v_existing.recorded_by<>p_recorded_by
+     OR NOT EXISTS (SELECT 1 FROM ug_clinic_sched.slots WHERE slot_id=v_existing.slot_id AND slot_ref=p_slot_ref) THEN
+   RAISE EXCEPTION 'Idempotency key was already used for a different appointment request'
+     USING ERRCODE='unique_violation';
+  END IF;
+  RETURN v_existing.appointment_id;
  END IF;
  SELECT * INTO v_slot FROM ug_clinic_sched.slots WHERE slot_ref=p_slot_ref FOR UPDATE;
  IF NOT FOUND THEN RAISE EXCEPTION 'Slot % not found',p_slot_ref USING ERRCODE='no_data_found'; END IF;
