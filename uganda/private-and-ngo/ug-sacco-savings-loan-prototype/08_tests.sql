@@ -14,7 +14,7 @@ BEGIN
  'SYN-LOAN-DISBURSEMENT-001',now(),'SYN-FINANCE-CLERK','SYN-DISBURSEMENT-EVIDENCE-001');
  BEGIN
   PERFORM ug_sacco.fn_record_loan_transaction('UGSAC-LT-DEMO-002','sacco-loan-idem-002',v_loan_ref,'repayment',500000,
-   'SYN-LOAN-REPAYMENT-OVER','SYN-REPAYMENT-DATE'::timestamptz,'SYN-FINANCE-CLERK','SYN-REPAYMENT-EVIDENCE-001');
+   'SYN-LOAN-REPAYMENT-OVER',now(),'SYN-FINANCE-CLERK','SYN-REPAYMENT-EVIDENCE-001');
   RAISE EXCEPTION 'ASSERT repayment above principal was accepted';
  EXCEPTION WHEN check_violation THEN NULL; END;
  PERFORM ug_sacco.fn_record_loan_transaction('UGSAC-LT-DEMO-003','sacco-loan-idem-003',v_loan_ref,'repayment',400000,

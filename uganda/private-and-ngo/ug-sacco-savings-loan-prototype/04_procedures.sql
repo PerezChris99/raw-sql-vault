@@ -63,3 +63,28 @@ BEGIN
  WHERE loan_id=l.loan_id;
  RETURN v_id;
 END; $$;
+
+CREATE OR REPLACE FUNCTION ug_sacco.fn_record_savings_transaction(
+ p_txn_ref TEXT,p_idempotency_key TEXT,p_account_ref TEXT,p_txn_type TEXT,p_amount NUMERIC,
+ p_external_reference TEXT,p_occurred_at TIMESTAMPTZ,p_actor_ref TEXT,p_evidence_ref TEXT
+) RETURNS BIGINT LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,ug_sacco AS $$
+DECLARE a ug_sacco.savings_accounts%ROWTYPE; v_balance NUMERIC(16,2); v_id BIGINT;
+BEGIN
+ IF p_txn_type NOT IN ('deposit','withdrawal','correction_credit','correction_debit')
+ OR p_amount IS NULL OR p_amount<=0 OR p_occurred_at IS NULL
+ OR length(btrim(COALESCE(p_actor_ref,'')))=0 OR length(btrim(COALESCE(p_evidence_ref,'')))=0 THEN
+  RAISE EXCEPTION 'Valid transaction type, amount, date, actor and evidence are required' USING ERRCODE='invalid_parameter_value';
+ END IF;
+ SELECT * INTO a FROM ug_sacco.savings_accounts WHERE account_ref=p_account_ref FOR UPDATE;
+ IF NOT FOUND THEN RAISE EXCEPTION 'Savings account not found' USING ERRCODE='no_data_found'; END IF;
+ IF a.status<>'open' THEN RAISE EXCEPTION 'Savings account is not open' USING ERRCODE='check_violation'; END IF;
+ SELECT COALESCE(SUM(CASE WHEN txn_type IN ('deposit','correction_credit') THEN amount ELSE -amount END),0)
+ INTO v_balance FROM ug_sacco.savings_transactions WHERE savings_account_id=a.savings_account_id;
+ IF p_txn_type IN ('withdrawal','correction_debit') AND p_amount>v_balance THEN
+  RAISE EXCEPTION 'Withdrawal/correction exceeds available savings balance' USING ERRCODE='check_violation';
+ END IF;
+ INSERT INTO ug_sacco.savings_transactions(txn_ref,idempotency_key,savings_account_id,txn_type,amount,external_reference,occurred_at,recorded_by_ref,evidence_ref)
+ VALUES(p_txn_ref,p_idempotency_key,a.savings_account_id,p_txn_type,p_amount,p_external_reference,p_occurred_at,p_actor_ref,p_evidence_ref)
+ RETURNING savings_txn_id INTO v_id;
+ RETURN v_id;
+END; $$;
