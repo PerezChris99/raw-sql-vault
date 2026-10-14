@@ -33,6 +33,11 @@ BEGIN
     IF p_reason IS NULL OR p_reason NOT IN ('receipt', 'sale', 'return', 'adjustment') THEN
         RAISE EXCEPTION 'invalid stock movement reason' USING ERRCODE = '22023';
     END IF;
+    IF (p_reason IN ('receipt', 'return') AND p_quantity_delta < 0)
+       OR (p_reason = 'sale' AND p_quantity_delta > 0) THEN
+        RAISE EXCEPTION 'movement reason % conflicts with quantity delta %',
+            p_reason, p_quantity_delta USING ERRCODE = '22023';
+    END IF;
     IF NULLIF(btrim(p_idempotency_key), '') IS NULL OR NULLIF(btrim(p_actor_ref), '') IS NULL THEN
         RAISE EXCEPTION 'idempotency key and actor reference are required' USING ERRCODE = '22023';
     END IF;
