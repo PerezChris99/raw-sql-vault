@@ -11,7 +11,7 @@ CREATE OR REPLACE FUNCTION opm_demo.fn_transition_action(
 )
 RETURNS BIGINT
 LANGUAGE plpgsql
-SECURITY INVOKER
+SECURITY DEFINER
 SET search_path = pg_catalog, opm_demo
 AS $function$
 DECLARE
@@ -62,6 +62,8 @@ BEGIN
     RETURN p_action_id;
 END;
 $function$;
+
+REVOKE ALL ON FUNCTION opm_demo.fn_transition_action(BIGINT, TEXT, TEXT, TEXT) FROM PUBLIC;
 
 COMMENT ON FUNCTION opm_demo.fn_transition_action(BIGINT, TEXT, TEXT, TEXT) IS
     'Applies allowed workflow transitions with row locking and an atomic event record.';
