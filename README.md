@@ -447,6 +447,6 @@ The blueprint now has representative demo packages from the initial Uganda gover
 - [Beginner curriculum supplement](docs/CURRICULUM_SUPPLEMENT.md) — prerequisites for the existing learning modules.
 - [Contribution workflow](CONTRIBUTING.md) — main/perez Git discipline.
 
-**Validation status:** The PostgreSQL/PostGIS regression suite and CI workflow have been added, but a passing end-to-end run is not yet confirmed. Do not use these synthetic examples as government-approved or production-ready systems without the testing, security/privacy review, data-owner approval and operational checks documented in the standards.
+**Validation status:** The PostgreSQL/PostGIS regression suite and local static-check scripts are included, but an end-to-end SQL run has not been confirmed. The GitHub Actions workflow was removed at the repository owner's request. Run `bash tools/lint_sql.sh` and, on a disposable PostgreSQL 15+ / PostGIS database, `DATABASE_URL=postgresql://... bash tools/run_sql_tests.sh`. Do not use these synthetic examples as government-approved or production-ready systems without testing, security/privacy review, data-owner approval and operational checks.
 
 The repository remains private and proprietary under its existing repository policy; no public/open-source license is implied by these additions.
