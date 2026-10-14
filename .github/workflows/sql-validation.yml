@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [main, perez]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -35,7 +35,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y postgresql-client
-      - name: Validate runner shell syntax
+      - name: Validate test-runner shell syntax
         run: bash -n tools/run_sql_tests.sh
-      - name: Run SQL regression tests
+      - name: Run integrated SQL regression suites
         run: tools/run_sql_tests.sh
