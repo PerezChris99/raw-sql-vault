@@ -16,5 +16,5 @@ case "$DATABASE_URL" in
   *production*|*prod*) echo "ERROR: refusing an ambiguous production-like DATABASE_URL." >&2; exit 2 ;;
 esac
 
-echo "Running Raw SQL Vault regression tests against the explicitly configured database."
-psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f sql/tests/run_all.sql
+echo "Running Raw SQL Vault SQL suites against the explicitly configured database."
+psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f sql/tests/all_packages.sql
