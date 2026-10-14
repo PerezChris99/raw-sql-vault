@@ -1,0 +1,3 @@
+CREATE OR REPLACE VIEW diplomacy_demo.v_engagement_register AS SELECT e.engagement_ref,m.mission_code,m.country_code,e.engagement_type,e.held_at,e.topic_code,e.publication_state FROM diplomacy_demo.engagements e JOIN diplomacy_demo.missions m USING(mission_id);
+CREATE OR REPLACE VIEW diplomacy_demo.v_open_commitments AS SELECT c.commitment_ref,e.engagement_ref,m.mission_code,c.action_summary,c.owner_ref,c.due_date,c.status FROM diplomacy_demo.commitments c JOIN diplomacy_demo.engagements e USING(engagement_id) JOIN diplomacy_demo.missions m USING(mission_id) WHERE c.status NOT IN('completed','cancelled');
+CREATE OR REPLACE VIEW diplomacy_demo.v_overdue_commitments AS SELECT * FROM diplomacy_demo.v_open_commitments WHERE due_date<CURRENT_DATE;
