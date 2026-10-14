@@ -1,0 +1,4 @@
+CREATE OR REPLACE VIEW urban_demo.v_application_register AS SELECT application_ref,applicant_token,locality_code,development_type,submitted_at,status FROM urban_demo.applications;
+CREATE OR REPLACE VIEW urban_demo.v_permit_expiry_watch AS SELECT p.permit_ref,a.application_ref,a.locality_code,p.permit_type,p.expires_on,p.status FROM urban_demo.permits p JOIN urban_demo.applications a USING(application_id) WHERE p.status='active' AND p.expires_on<CURRENT_DATE+INTERVAL '90 days';
+CREATE OR REPLACE VIEW urban_demo.v_open_actions AS SELECT x.action_ref,i.inspection_ref,a.application_ref,a.locality_code,x.summary,x.owner_ref,x.due_date,x.status FROM urban_demo.actions x JOIN urban_demo.inspections i USING(inspection_id) JOIN urban_demo.applications a USING(application_id) WHERE x.status NOT IN('closed','cancelled');
+CREATE OR REPLACE VIEW urban_demo.v_overdue_actions AS SELECT * FROM urban_demo.v_open_actions WHERE due_date<CURRENT_DATE;
