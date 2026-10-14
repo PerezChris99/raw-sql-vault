@@ -94,6 +94,11 @@ The package artifacts are now present and merged, but the full operational accep
 - [#62 — SACCO savings/loan prototype](https://github.com/PerezChris99/raw-sql-vault/pull/62)
 - [#63 — Cooperative/SME sales analytics](https://github.com/PerezChris99/raw-sql-vault/pull/63)
 
+## Additional repository delivery notes
+
+- [#64 — Checklist, Master Index, roadmap and implementation status update](https://github.com/PerezChris99/raw-sql-vault/pull/64)
+- [#65 — Public-transport cancellation-state correction and regression assertion](https://github.com/PerezChris99/raw-sql-vault/pull/65)
+
 ## Final status language
 
 - **Domain checklist coverage:** 35/35 candidate domains mapped to repository implementations.
