@@ -3,7 +3,7 @@
 -- Run against a disposable database; all mutations roll back.
 BEGIN;
 DO $test$
-DECLARE v_count BIGINT;
+DECLARE v_count BIGINT; v_disbursement_id BIGINT; v_replay_id BIGINT;
 BEGIN
  BEGIN
    PERFORM ug_bursary.fn_transition_application('UGB-DEMO-0001','approved','reviewer-test','approve without evidence',NULL);
@@ -29,9 +29,22 @@ BEGIN
    RAISE EXCEPTION 'ASSERT disbursement above award ceiling was accepted';
  EXCEPTION WHEN check_violation THEN NULL; END;
 
- PERFORM ug_bursary.fn_record_disbursement('UGBD-TEST-VALID','UGB-DEMO-0001','bursary-idem-test-002',100000,'UGX','SYNTHETIC-PAYMENT-VALID',now(),'finance-test');
+ v_disbursement_id:=ug_bursary.fn_record_disbursement('UGBD-TEST-VALID','UGB-DEMO-0001','bursary-idem-test-002',100000,'UGX','SYNTHETIC-PAYMENT-VALID',TIMESTAMPTZ '2026-10-15 12:00:00+03','finance-test');
+ v_replay_id:=ug_bursary.fn_record_disbursement('UGBD-TEST-VALID','UGB-DEMO-0001','bursary-idem-test-002',100000,'UGX','SYNTHETIC-PAYMENT-VALID',TIMESTAMPTZ '2026-10-15 12:00:00+03','finance-test');
+ IF v_disbursement_id<>v_replay_id THEN RAISE EXCEPTION 'ASSERT matching disbursement replay did not return original record'; END IF;
+
+ BEGIN
+  PERFORM ug_bursary.fn_record_disbursement('UGBD-TEST-CONFLICT','UGB-DEMO-0001','bursary-idem-test-002',100000,'UGX','SYNTHETIC-PAYMENT-DIFFERENT',TIMESTAMPTZ '2026-10-15 12:00:00+03','finance-test');
+  RAISE EXCEPTION 'ASSERT idempotency key reuse with different payment was accepted';
+ EXCEPTION WHEN unique_violation THEN NULL; END;
+
+ BEGIN
+  PERFORM ug_bursary.fn_record_disbursement('UGBD-TEST-SCALE','UGB-DEMO-0001','bursary-idem-test-003',100.001,'UGX','SYNTHETIC-PAYMENT-SCALE',now(),'finance-test');
+  RAISE EXCEPTION 'ASSERT amount precision beyond two decimal places was accepted';
+ EXCEPTION WHEN invalid_parameter_value THEN NULL; END;
+
  SELECT COUNT(*) INTO v_count FROM ug_bursary.disbursements WHERE disbursement_ref='UGBD-TEST-VALID';
- IF v_count<>1 THEN RAISE EXCEPTION 'ASSERT valid disbursement was not recorded'; END IF;
+ IF v_count<>1 THEN RAISE EXCEPTION 'ASSERT valid disbursement was not recorded exactly once'; END IF;
 END;
 $test$;
 ROLLBACK;

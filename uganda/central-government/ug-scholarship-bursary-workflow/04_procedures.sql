@@ -104,19 +104,50 @@ CREATE OR REPLACE FUNCTION ug_bursary.fn_record_disbursement(
 ) RETURNS BIGINT
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,ug_bursary
 AS $$
-DECLARE v_app ug_bursary.applications%ROWTYPE; v_programme ug_bursary.programmes%ROWTYPE;
-        v_paid NUMERIC(14,2); v_id BIGINT;
+DECLARE
+ v_app ug_bursary.applications%ROWTYPE;
+ v_programme ug_bursary.programmes%ROWTYPE;
+ v_existing ug_bursary.disbursements%ROWTYPE;
+ v_paid NUMERIC(14,2);
+ v_id BIGINT;
 BEGIN
+ IF length(btrim(COALESCE(p_idempotency_key,'')))<8
+    OR length(btrim(COALESCE(p_disbursement_ref,'')))=0
+    OR length(btrim(COALESCE(p_external_payment_ref,'')))=0
+    OR length(btrim(COALESCE(p_recorded_by,'')))=0
+    OR p_amount IS NULL OR p_amount<=0 OR p_amount<>round(p_amount,2)
+    OR p_currency_code IS NULL OR p_paid_at IS NULL THEN
+  RAISE EXCEPTION 'Disbursement requires valid references, a positive amount to two decimal places, currency, date and recorder'
+    USING ERRCODE='invalid_parameter_value';
+ END IF;
+ -- Serialise retries by key before locking application rows.
+ PERFORM pg_advisory_xact_lock(hashtextextended(p_idempotency_key,0));
+ SELECT * INTO v_existing FROM ug_bursary.disbursements
+ WHERE idempotency_key=p_idempotency_key FOR UPDATE;
+ IF FOUND THEN
+  IF v_existing.disbursement_ref<>p_disbursement_ref
+     OR v_existing.external_payment_ref<>p_external_payment_ref
+     OR v_existing.amount<>p_amount
+     OR v_existing.currency_code<>p_currency_code
+     OR v_existing.paid_at<>p_paid_at
+     OR v_existing.recorded_by<>p_recorded_by
+     OR NOT EXISTS (SELECT 1 FROM ug_bursary.applications
+                    WHERE application_id=v_existing.application_id AND application_ref=p_application_ref) THEN
+   RAISE EXCEPTION 'Idempotency key was already used for a different disbursement request'
+     USING ERRCODE='unique_violation';
+  END IF;
+  RETURN v_existing.disbursement_id;
+ END IF;
  SELECT * INTO v_app FROM ug_bursary.applications WHERE application_ref=p_application_ref FOR UPDATE;
  IF NOT FOUND THEN RAISE EXCEPTION 'Application % not found',p_application_ref USING ERRCODE='no_data_found'; END IF;
  IF v_app.status<>'approved' THEN RAISE EXCEPTION 'Only approved applications may be disbursed' USING ERRCODE='check_violation'; END IF;
  SELECT * INTO v_programme FROM ug_bursary.programmes WHERE programme_id=v_app.programme_id;
  SELECT COALESCE(SUM(amount),0) INTO v_paid FROM ug_bursary.disbursements WHERE application_id=v_app.application_id;
- IF p_amount IS NULL OR p_amount<=0 OR v_paid+p_amount>v_programme.award_amount THEN
-  RAISE EXCEPTION 'Disbursement must be positive and not exceed the award balance' USING ERRCODE='check_violation';
+ IF v_paid+p_amount>v_programme.award_amount THEN
+  RAISE EXCEPTION 'Disbursement must not exceed the award balance' USING ERRCODE='check_violation';
  END IF;
- IF p_currency_code<>v_programme.currency_code OR p_paid_at IS NULL OR length(btrim(COALESCE(p_recorded_by,'')))=0 THEN
-  RAISE EXCEPTION 'Currency, payment date and recorder must match the programme policy' USING ERRCODE='invalid_parameter_value';
+ IF p_currency_code<>v_programme.currency_code THEN
+  RAISE EXCEPTION 'Disbursement currency must match the programme currency' USING ERRCODE='invalid_parameter_value';
  END IF;
  INSERT INTO ug_bursary.disbursements(disbursement_ref,idempotency_key,application_id,amount,currency_code,external_payment_ref,paid_at,recorded_by)
  VALUES(p_disbursement_ref,p_idempotency_key,v_app.application_id,p_amount,p_currency_code,p_external_payment_ref,p_paid_at,p_recorded_by)
