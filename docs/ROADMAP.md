@@ -1,32 +1,36 @@
 # Raw SQL Vault — Phased Delivery Roadmap
 
-## Mission
+## Mission and execution authorization
 
-Build a carefully versioned library of database solutions, prioritising Uganda's public service and local context before expanding to private/NGO sectors and worldwide domains. The catalogue is broad by design; each implementation remains small enough to inspect, test and review.
+Build a carefully versioned library of database solutions, prioritising Uganda's public-service and local context before expanding to private/NGO sectors, worldwide domains, and shared analytics infrastructure. The catalogue is broad by design; each implementation remains small enough to inspect, test and review.
 
-The sequence follows the delivery model in the master prompt. **After each phase, stop and wait for the user's explicit “GO” before starting the next phase.** Within a phase, deliver one domain solution per commit-ready unit/pull request; do not attempt to implement the entire catalogue in one batch.
+**Execution instruction:** The repository owner has explicitly authorised proceeding through all phases without stopping for a separate “GO” at every phase. Continue sequentially through the phases and their agreed units, reporting blockers honestly. This authorisation does not waive data-owner/legal checks, package review, test requirements, or release gates. It also does not make the entire catalogue feasible to complete in one batch: work remains one independently reviewable package per change.
 
-## Phase 0 — Blueprint (current)
+**CI constraint:** Do not create GitHub Actions, CI workflows, or CI configuration. The owner has explicitly declined repository CI. Run the documented static and database checks in an approved local/manual environment when available, and record the actual output. Missing test output is never a pass.
+
+## Phase 0 — Blueprint and repository controls
 
 ### Deliverables
 - `docs/MASTER_INDEX.md`: stable slugs for Uganda offices, ministry portfolios, named agencies, local-government levels, cross-sector problems, worldwide domains and SDGs 1–17.
 - `docs/CONVENTIONS.md`: repository layout, package structure, naming, data modelling, dialect/version, migration, security, and operational standards.
 - `docs/ROADMAP.md`: phases, per-unit acceptance gates, order of work and dependencies.
 - `CONTRIBUTING.md`: branch, commit, merge, and history-preservation workflow.
+- Root `README.md`: navigation, diagrams, scope, status vocabulary, testing and delivery workflow.
 
 ### Exit gate
-- Slugs and folder conventions approved.
-- Scope boundaries and source-of-truth policy approved.
-- Git workflow and the handling of the repository's already-open temporary-branch PR reconciled.
-- No ministry/agency package has started implementation.
+- Slugs and folder conventions are documented.
+- Scope boundaries and source-of-truth policy are documented.
+- Two-branch Git workflow and history-preservation requirements are explicit.
+- No workflow adds GitHub Actions/CI.
+- The index distinguishes planned candidates from implemented and verified packages.
 
 Phase 0 is a blueprint, not approval to access real agency systems, ingest real personal data, or represent a suggested design as an officially endorsed system.
 
-## Phase 1 — Uganda central government (one unit per ministry/portfolio)
+## Phase 1 — Uganda central government
 
 Implement one solution package at a time for the central-government entries in the master index. Confirm whether each label is a standalone ministry, an office, a ministerial portfolio, a programme, or a department before selecting its schema boundary. Some cross-cutting portfolios are administered through parent offices; do not invent legal entities.
 
-Suggested order for initial low-risk, broadly useful foundations:
+Initial priority order:
 1. `ug-opm` — programme action register / inter-agency follow-up (metadata only).
 2. `ug-m-local-government` — local service-request and service-level tracker.
 3. `ug-m-works-transport` — road-defect and work-order workflow.
@@ -37,7 +41,7 @@ Suggested order for initial low-risk, broadly useful foundations:
 8. `ug-m-finance-planning` — aggregate budget execution and reconciliation.
 9. Remaining listed ministry/portfolio entries in index order, each after scope validation.
 
-For each ministry, a “unit” is an independent, reviewable package; separate systems within a ministry should not be forced into one monolith. Define integration boundaries instead of copying whole databases between bodies.
+Some priority packages already exist in demo form. Inspect and validate them before duplicating work; a package's presence is not proof of passing tests. Separate systems within a ministry should not be forced into one monolith. Define integration boundaries instead of copying whole databases between bodies.
 
 ## Phase 2 — Uganda agencies and local government
 
@@ -99,7 +103,7 @@ Shared infrastructure must not become a global table that centralises all person
 6. Add 15–30 meaningful queries where appropriate, views and routines only when useful, and explain the expected results.
 7. Add least-privilege permissions, RLS where relevant, audit behavior and negative access tests.
 8. Add migration scripts and executable assertions with known expected outcomes.
-9. Run static SQL lint and a clean PostgreSQL 15+ build/test; run dialect variants on their own engines.
+9. Run static SQL lint and a clean PostgreSQL 15+ build/test in an approved environment; run dialect variants on their own engines. No CI workflow is to be added.
 10. Inspect query plans and relevant write/locking costs using representative synthetic data.
 11. Review the full diff, check sensitive data/secrets, document limitations and open one pull request for the unit.
 12. Merge only after review and the applicable checks pass; verify the resulting history before beginning the next unit.
@@ -112,20 +116,20 @@ Project health must be reported honestly:
 - **Indexed**: a slug and planned purpose exist.
 - **Designed**: ERD/schema proposal reviewed.
 - **Implemented**: code, migrations, seeds and tests exist.
-- **Verified**: stated test commands succeeded on the declared engine/version.
+- **Verified**: stated test commands succeeded on the declared engine/version and evidence is recorded.
 - **Operationally approved**: independent security, data-owner and operations sign-off exists.
 
 Never promote status merely because files were committed.
 
 ## Phase checkpoints
 
-| Checkpoint | Must be true before moving on |
+| Checkpoint | Must be true before marking the phase complete |
 |---|---|
-| End Phase 0 | user approves master index, conventions, roadmap and Git workflow |
-| End Phase 1 | every agreed central-government unit has passed its own review gate |
-| End Phase 2 | agency/local-government registry has been reviewed and each agreed unit passed |
-| End Phase 3 | private/NGO candidates prioritised by users and data owners; each approved unit passed |
-| End Phase 4 | worldwide units document jurisdiction and conformance limits; tests passed |
-| End Phase 5 | shared analytical/data platform patterns are validated against domain contracts and recovery/security requirements |
+| Phase 0 | Index, conventions, roadmap, README, and Git workflow are consistent; no CI workflow is present |
+| Phase 1 | Every agreed central-government unit has passed its own package review gate |
+| Phase 2 | Agency/local-government inventory has been reviewed and each agreed unit passed |
+| Phase 3 | Private/NGO candidates are prioritised and each approved unit passed |
+| Phase 4 | Worldwide units document jurisdiction and conformance limits; tests passed |
+| Phase 5 | Shared analytical/data platform patterns are validated against domain contracts and recovery/security requirements |
 
-At each checkpoint, provide a concise status report, list blocked/unverified items, and wait for explicit “GO” before beginning the next phase.
+Because execution across all phases is authorised, checkpoints are reporting and quality gates rather than requests for another “GO.” Continue to the next phase after recording the previous phase's outcome. If a required check cannot be run, report the phase as blocked/unverified rather than silently treating it as complete.
