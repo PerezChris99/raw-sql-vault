@@ -439,3 +439,24 @@ The following additional Uganda implementation packages are present on the repos
 | `uganda/central-government/ug-cold-chain-monitor/` | Equipment temperature observations, calibration snapshots, excursions and maintenance work orders | Implemented; no clinical disposition logic; SQL tests not run |
 | `uganda/central-government/ug-clinic-appointment-planner/` | Slot scheduling, double-booking prevention, cancellation and appointment lifecycle | Implemented; no clinical records; concurrency tests not run |
 | `uganda/central-government/ug-scholarship-bursary-workflow/` | Application review, appeals and award-bounded disbursement recording | Implemented; opaque student references only; SQL tests not run |
+| `uganda/central-government/ug-works-contract-milestone-register/` | Public works contracts, approved budget versions, milestones, certificates and payment evidence | Implemented; SQL tests not run; not an official register |
+| `uganda/agencies/ug-procurement-contract-monitor/` | Procurement notices, award disclosure, deliverables and variation review | Implemented; SQL tests not run; local procurement rules require review |
+| `uganda/central-government/ug-school-textbook-distribution/` | Textbook stock ledger, allocations, dispatches, receipts and shortage reconciliation | Implemented; SQL tests not run; synthetic school/store references |
+| `uganda/central-government/ug-official-records-index/` | Metadata-only records index, custody chain, retention, legal holds and disposition | Implemented; SQL tests not run; documents remain outside database |
+| `uganda/central-government/ug-budget-execution-dashboard/` | Appropriation versions, releases, commitments, expenditure and output reporting | Implemented; SQL tests not run; not a general ledger |
+| `uganda/central-government/ug-school-attendance-support/` | Pseudonymous attendance, evidence-backed corrections, aggregate reporting and supportive follow-up | Implemented; SQL tests not run; no automated punitive scoring |
+| `uganda/central-government/ug-tvet-apprenticeship-outcomes/` | TVET programmes, skills assessments, cohorts, placements and feedback | Implemented; SQL tests not run; not an accreditation/hiring system |
+| `uganda/private-and-ngo/ug-supplier-purchase-order-workflow/` | SME purchase requests, orders, goods receipts and invoice match exceptions | Implemented; SQL tests not run; no payment execution |
+| `uganda/private-and-ngo/ug-customer-support-sla-tracker/` | Redacted support tickets, event history, first-response and SLA reporting | Implemented; SQL tests not run; wall-clock SLA semantics documented |
+| `uganda/private-and-ngo/ug-fleet-fuel-maintenance-audit/` | Fuel/odometer ledger, maintenance queue and reviewable exception candidates | Implemented; SQL tests not run; flags are not proof of misconduct |
+| `uganda/local-government/ug-waste-collection-reliability/` | Route/shift pickup evidence, missed-service incidents and completion reporting | Implemented; SQL tests not run; synthetic service-point tokens |
+| `uganda/private-and-ngo/ug-payroll-input-leave-workflow/` | Leave decisions, payroll input period approval and frozen-input trigger | Implemented; SQL tests not run; not payroll/tax/payment software |
+| `uganda/central-government/ug-public-transport-reliability/` | Route-level timetables, observed departures, delay and disruption reporting | Implemented; SQL tests not run; no passenger movement tracking |
+| `uganda/private-and-ngo/ug-humanitarian-assistance-reconciliation/` | Pseudonymous authorisations, bounded delivery records, exceptions and referrals | Implemented; SQL tests not run; high-sensitivity synthetic prototype |
+| `uganda/private-and-ngo/ug-cybersecurity-remediation-register/` | Authorised asset/finding metadata, remediation queue and independent verification | Implemented; SQL tests not run; no exploit payloads or credentials |
+| `uganda/private-and-ngo/ug-sme-bookkeeping-ledger/` | Double-entry journals, balanced posting, immutable posted lines and period close | Implemented; SQL tests not run; not certified accounting/tax software |
+| `uganda/private-and-ngo/ug-hospitality-booking-stock/` | Row-locked resource booking, inventory movement and stock consumption | Implemented; SQL tests not run; no payment-card data |
+| `uganda/private-and-ngo/ug-sacco-savings-loan-prototype/` | Pseudonymous savings/loan ledgers, human loan review and principal bounds | Implemented as a high-risk prototype; SQL tests and independent financial review pending |
+| `uganda/private-and-ngo/ug-coop-sme-sales-analytics/` | Return-bounded sales facts, monthly category sales, margin and repeat-sale summaries | Implemented; SQL tests not run; no tax/accounting claim |
+
+For the reconciled roadmap candidate list and the distinction between domain coverage and institution-specific implementation, see [Uganda Implementation Checklist](UGANDA_IMPLEMENTATION_CHECKLIST.md).
