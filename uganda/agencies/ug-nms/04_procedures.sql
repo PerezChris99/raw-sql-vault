@@ -5,7 +5,7 @@ BEGIN
  IF NULLIF(btrim(p_receipt_ref),'') IS NULL OR NULLIF(btrim(p_dispatch_ref),'') IS NULL OR NULLIF(btrim(p_batch_code),'') IS NULL OR NULLIF(btrim(p_document_ref),'') IS NULL OR NULLIF(btrim(p_idem),'') IS NULL OR p_quantity IS NULL OR p_quantity<=0 THEN
  RAISE EXCEPTION 'receipt fields required and quantity positive' USING ERRCODE='22023'; END IF;
  PERFORM pg_advisory_xact_lock(hashtextextended(btrim(p_idem),0));
- SELECT r.receipt_id,r.quantity_received,d.dispatch_ref,b.batch_code,r.receipt_document_ref INTO v_old
+ SELECT r.receipt_id,r.quantity_received,d.dispatch_ref,b.batch_code,r.receipt_document_ref,r.receipt_ref INTO v_old
  FROM nms_demo.receipt_entries r JOIN nms_demo.dispatches d USING(dispatch_id) JOIN nms_demo.batches b USING(batch_id)
  WHERE r.idempotency_key=btrim(p_idem);
  IF FOUND THEN
