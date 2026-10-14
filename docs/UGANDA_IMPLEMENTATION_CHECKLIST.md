@@ -98,6 +98,18 @@ The package artifacts are now present and merged, but the full operational accep
 
 - [#64 — Checklist, Master Index, roadmap and implementation status update](https://github.com/PerezChris99/raw-sql-vault/pull/64)
 - [#65 — Public-transport cancellation-state correction and regression assertion](https://github.com/PerezChris99/raw-sql-vault/pull/65)
+- [#66 — Final PR and legacy-branch status notes](https://github.com/PerezChris99/raw-sql-vault/pull/66)
+- [#67 — Clinic appointment package verification](https://github.com/PerezChris99/raw-sql-vault/pull/67); this was a no-file-diff merge because the package already existed on `main`.
+- [#68 — Idempotent appointment/disbursement retries and time-safe regression tests](https://github.com/PerezChris99/raw-sql-vault/pull/68)
+- [#69 — Clinic seed timestamps and safe rerun correction](https://github.com/PerezChris99/raw-sql-vault/pull/69)
+
+## Post-delivery static inventory check
+
+- The checklist's 35 candidate domains remain mapped; 34 distinct Uganda package paths are referenced directly in the domain table, with legacy project folders used for shared coverage where explicitly noted.
+- All 34 directly referenced Uganda packages contain the nine standard package artifacts (`01_schema.sql` through `08_tests.sql`, plus `README.md`) and at least one SQL migration.
+- `main` and `perez` were synchronized after the latest merge, and no pull requests are open.
+- Two legacy branches (`autopilot-unit` and `docs/beginner-gap-audit-uganda-projects`) remain on GitHub. They are 81 commits behind `main` with no unique commits; the available repository connector does not expose branch deletion, so their removal remains a repository-admin cleanup item.
+- This is a Git-tree inventory check, not a SQL execution or syntax-validation result.
 
 ## Final status language
 
