@@ -1,0 +1,4 @@
+CREATE OR REPLACE VIEW kcca_demo.v_latest_asset_condition AS SELECT DISTINCT ON(a.asset_id) a.asset_ref,a.asset_type,a.area_code,a.display_label,i.condition_state,i.priority,i.inspected_at FROM kcca_demo.assets a LEFT JOIN kcca_demo.inspections i USING(asset_id) WHERE a.is_active ORDER BY a.asset_id,i.inspected_at DESC NULLS LAST,i.inspection_id DESC;
+CREATE OR REPLACE VIEW kcca_demo.v_open_work_orders AS SELECT w.work_ref,a.asset_ref,a.asset_type,a.area_code,w.work_type,w.summary,w.priority,w.estimated_cost_ugx,w.due_date,w.status FROM kcca_demo.work_orders w JOIN kcca_demo.assets a USING(asset_id) WHERE w.status NOT IN('completed','cancelled');
+CREATE OR REPLACE VIEW kcca_demo.v_overdue_work_orders AS SELECT * FROM kcca_demo.v_open_work_orders WHERE due_date<CURRENT_DATE;
+CREATE OR REPLACE VIEW kcca_demo.v_area_workload AS SELECT area_code,COUNT(*) AS open_orders,SUM(estimated_cost_ugx) AS estimated_cost_ugx FROM kcca_demo.v_open_work_orders GROUP BY area_code;
