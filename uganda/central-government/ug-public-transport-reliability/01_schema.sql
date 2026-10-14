@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS ug_transport.departure_observations (
  source_ref TEXT NOT NULL CHECK (length(btrim(source_ref))>0),
  recorded_by_ref TEXT NOT NULL CHECK (length(btrim(recorded_by_ref))>0),
  evidence_ref TEXT NOT NULL CHECK (length(btrim(evidence_ref))>0),
+ UNIQUE(schedule_id),
  CHECK ((observation_status='not_observed') OR observed_at IS NOT NULL),
  CHECK (observation_status<>'departed' OR delay_minutes IS NOT NULL)
 );
