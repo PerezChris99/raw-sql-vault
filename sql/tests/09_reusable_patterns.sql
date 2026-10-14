@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS audit_demo.test_records (
 DROP TRIGGER IF EXISTS trg_test_records_audit ON audit_demo.test_records;
 CREATE TRIGGER trg_test_records_audit
 AFTER INSERT OR UPDATE OR DELETE ON audit_demo.test_records
-FOR EACH ROW EXECUTE FUNCTION audit_demo.fn_capture_row_change();
+FOR EACH ROW EXECUTE FUNCTION audit_demo.fn_capture_row_change('id');
 
 DO $test$
 DECLARE
