@@ -36,6 +36,16 @@ BEGIN
             USING ERRCODE = '22023';
     END IF;
 
+    IF EXISTS (
+        SELECT 1
+        FROM unnest(p_names, p_emails) AS pair(display_name, email)
+        GROUP BY lower(btrim(email))
+        HAVING COUNT(*) > 1
+    ) THEN
+        RAISE EXCEPTION 'batch contains repeated email addresses'
+            USING ERRCODE = '23505';
+    END IF;
+
     RETURN QUERY
     INSERT INTO vault_demo.users AS target (display_name, email)
     SELECT btrim(pair.display_name), lower(btrim(pair.email))
