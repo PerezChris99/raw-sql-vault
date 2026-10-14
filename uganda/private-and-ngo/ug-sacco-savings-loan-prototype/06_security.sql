@@ -15,6 +15,7 @@ GRANT EXECUTE ON FUNCTION ug_sacco.fn_record_savings_transaction(TEXT,TEXT,TEXT,
 GRANT SELECT ON ug_sacco.loan_applications,ug_sacco.members TO ug_sacco_loan_reviewer;
 GRANT EXECUTE ON FUNCTION ug_sacco.fn_review_loan_application(TEXT,TEXT,NUMERIC,TEXT,TEXT,TEXT) TO ug_sacco_loan_reviewer;
 REVOKE ALL ON FUNCTION ug_sacco.fn_record_loan_transaction(TEXT,TEXT,TEXT,TEXT,NUMERIC,TEXT,TIMESTAMPTZ,TEXT,TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION ug_sacco.fn_record_savings_transaction(TEXT,TEXT,TEXT,TEXT,NUMERIC,TEXT,TIMESTAMPTZ,TEXT,TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION ug_sacco.fn_review_loan_application(TEXT,TEXT,NUMERIC,TEXT,TEXT,TEXT) FROM PUBLIC;
 REVOKE ALL ON ALL SEQUENCES IN SCHEMA ug_sacco FROM PUBLIC;
 -- Real deployment requires member row scope, dual control, reconciliation and licensed compliance review.
