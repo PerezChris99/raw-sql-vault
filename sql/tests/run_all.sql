@@ -1,11 +1,6 @@
--- Entry point; invoke with psql -X -v ON_ERROR_STOP=1 -f sql/tests/run_all.sql.
+-- Shared SQL correctness regression suite.
+-- Invoke through psql -X -v ON_ERROR_STOP=1.
 \set ON_ERROR_STOP on
-\ir ../fixes/00_demo_schema.sql
-\ir ../fixes/01_sales_filter_consistency.sql
-\ir ../fixes/02_date_range_overlap.sql
-\ir ../fixes/03_null_safe_scoring.sql
-\ir ../fixes/04_rolling_window.sql
-\ir ../fixes/05_spatial_dedup.sql
-\ir ../fixes/06_batch_insert_safety.sql
+\ir ../migrations/V0001__demo_correctness_patterns.sql
 \ir 07_test_fixtures.sql
 \ir 08_regression_tests.sql
