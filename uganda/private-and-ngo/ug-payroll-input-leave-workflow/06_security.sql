@@ -10,6 +10,8 @@ GRANT USAGE ON SCHEMA ug_hr_payroll TO ug_hr_reader,ug_payroll_input_clerk,ug_pa
 REVOKE ALL ON ALL TABLES IN SCHEMA ug_hr_payroll FROM PUBLIC;
 GRANT SELECT ON ug_hr_payroll.v_leave_review_queue TO ug_hr_reader;
 GRANT SELECT ON ug_hr_payroll.staff_refs,ug_hr_payroll.leave_requests,ug_hr_payroll.payroll_periods,ug_hr_payroll.payroll_inputs TO ug_payroll_input_clerk,ug_payroll_reviewer;
+GRANT INSERT ON ug_hr_payroll.payroll_inputs TO ug_payroll_input_clerk;
+GRANT USAGE,SELECT ON ALL SEQUENCES IN SCHEMA ug_hr_payroll TO ug_payroll_input_clerk;
 GRANT EXECUTE ON FUNCTION ug_hr_payroll.fn_review_leave(TEXT,TEXT,TEXT,TEXT) TO ug_payroll_reviewer;
 GRANT EXECUTE ON FUNCTION ug_hr_payroll.fn_approve_period(TEXT,TEXT,TEXT) TO ug_payroll_reviewer;
 REVOKE ALL ON FUNCTION ug_hr_payroll.fn_review_leave(TEXT,TEXT,TEXT,TEXT) FROM PUBLIC;
