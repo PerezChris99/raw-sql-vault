@@ -15,6 +15,8 @@ BEGIN
  approved_by_ref=CASE WHEN p_to='approved' THEN btrim(p_actor) ELSE approved_by_ref END,
  approved_at=CASE WHEN p_to='approved' THEN clock_timestamp() ELSE approved_at END,
  quality_note=COALESCE(quality_note,btrim(p_note)) WHERE delivery_id=p_id;
+ INSERT INTO coop_demo.delivery_events(delivery_id,previous_status,new_status,event_note,actor_ref,grade_ref)
+ VALUES(p_id,v_from,p_to,btrim(p_note),btrim(p_actor),NULLIF(btrim(p_grade_ref),''));
  RETURN p_id;
 END; $$;
 CREATE OR REPLACE FUNCTION coop_demo.fn_record_payment(p_ref TEXT,p_delivery_ref TEXT,p_amount NUMERIC,p_channel TEXT,p_external_ref TEXT,p_idem TEXT)
@@ -25,10 +27,12 @@ BEGIN
  THEN RAISE EXCEPTION 'payment fields required and amount must be positive' USING ERRCODE='22023'; END IF;
  IF p_channel IS NULL OR p_channel NOT IN('bank_transfer','mobile_money_batch','cash_receipt','other') THEN RAISE EXCEPTION 'invalid payment channel' USING ERRCODE='22023'; END IF;
  PERFORM pg_advisory_xact_lock(hashtextextended(btrim(p_idem),0));
- SELECT p.payment_id,p.amount_ugx,d.delivery_ref INTO v_old
+ SELECT p.payment_id,p.amount_ugx,d.delivery_ref,p.channel,p.external_reference,p.payment_ref INTO v_old
  FROM coop_demo.payments p JOIN coop_demo.deliveries d USING(delivery_id) WHERE p.idempotency_key=btrim(p_idem);
  IF FOUND THEN
-  IF v_old.amount_ugx<>p_amount OR v_old.delivery_ref<>btrim(p_delivery_ref) THEN RAISE EXCEPTION 'idempotency key reused with different payment payload' USING ERRCODE='23505'; END IF;
+  IF v_old.amount_ugx<>p_amount OR v_old.delivery_ref<>btrim(p_delivery_ref) OR v_old.channel<>p_channel OR v_old.external_reference<>btrim(p_external_ref) OR v_old.payment_ref<>btrim(p_ref) THEN
+   RAISE EXCEPTION 'idempotency key reused with different payment payload' USING ERRCODE='23505';
+  END IF;
   RETURN v_old.payment_id;
  END IF;
  SELECT delivery_id,payable_ugx,status INTO v_delivery,v_payable,v_status
