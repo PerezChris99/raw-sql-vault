@@ -26,7 +26,7 @@ CREATE INDEX IF NOT EXISTS ix_row_change_log_changed_at
 CREATE OR REPLACE FUNCTION audit_demo.fn_capture_row_change()
 RETURNS TRIGGER
 LANGUAGE plpgsql
-SECURITY INVOKER
+SECURITY DEFINER
 SET search_path = pg_catalog, audit_demo
 AS $function$
 DECLARE
@@ -57,6 +57,10 @@ BEGIN
     RETURN NEW;
 END;
 $function$;
+
+REVOKE ALL ON FUNCTION audit_demo.fn_capture_row_change() FROM PUBLIC;
+
+REVOKE ALL ON FUNCTION audit_demo.fn_capture_row_change() FROM PUBLIC;
 
 COMMENT ON TABLE audit_demo.row_change_log IS
     'Restricted row-change evidence; actor_context is trusted only if set by trusted middleware.';
