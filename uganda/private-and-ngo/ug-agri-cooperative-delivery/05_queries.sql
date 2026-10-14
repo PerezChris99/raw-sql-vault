@@ -13,7 +13,9 @@ SELECT status,COUNT(*) FROM coop_demo.deliveries GROUP BY status;
 SELECT cooperative_code,SUM(gross_kg) gross_kg FROM coop_demo.v_delivery_summary GROUP BY cooperative_code;
 -- 07 rejection proportion by produce.
 SELECT produce_code,SUM(rejected_kg)/NULLIF(SUM(gross_kg),0) AS rejected_ratio FROM coop_demo.v_delivery_summary GROUP BY produce_code;
--- 08 delivery and event history is managed by delivery status; list payments.
+-- 08 delivery status event history.
+SELECT d.delivery_ref,e.previous_status,e.new_status,e.actor_ref,e.happened_at,e.grade_ref FROM coop_demo.delivery_events e JOIN coop_demo.deliveries d USING(delivery_id) ORDER BY d.delivery_ref,e.happened_at,e.event_id;
+-- 08b registered payment events.
 SELECT d.delivery_ref,p.payment_ref,p.paid_at,p.amount_ugx,p.channel FROM coop_demo.payments p JOIN coop_demo.deliveries d USING(delivery_id) ORDER BY d.delivery_ref,p.paid_at;
 -- 09 deliveries waiting for approval.
 SELECT delivery_ref,cooperative_code,accepted_kg,status FROM coop_demo.v_delivery_summary WHERE status='quality_checked';
