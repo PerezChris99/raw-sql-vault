@@ -87,7 +87,9 @@ The repository also contains focused examples for canonical sales policy, inclus
 
 ## Git status and delivery discipline
 
-The root README was previously merged through PR #31. The Uganda implementation batch added PRs #45–#63 for public works contracts, procurement, textbooks, official records, budget execution, attendance support, TVET, supplier purchasing, support SLA, fleet audit, waste collection, payroll inputs, public transport, humanitarian assistance, cyber remediation, bookkeeping, hospitality, SACCO and cooperative/SME sales analytics. After each merge, `perez` was synchronized to `main`; the latest check found them identical with zero commits ahead or behind. SQL execution remains unverified.
+The root README was previously merged through PR #31. The Uganda implementation batch added PRs #45–#63 for public works contracts, procurement, textbooks, official records, budget execution, attendance support, TVET, supplier purchasing, support SLA, fleet audit, waste collection, payroll inputs, public transport, humanitarian assistance, cyber remediation, bookkeeping, hospitality, SACCO and cooperative/SME sales analytics; PR #64 reconciled the checklist and status, and PR #65 corrected public-transport cancellation state. After each merge, `perez` was synchronized to `main`; the latest check found them identical with zero commits ahead or behind. SQL execution remains unverified.
+
+**Branch inventory:** `main` and `perez` are synchronized. Two legacy branches (`autopilot-unit` and `docs/beginner-gap-audit-uganda-projects`) remain and are each 77 commits behind `main` with zero unique commits ahead. The available repository connector exposes no branch-delete action, so they have not been deleted. Remove them through GitHub branch settings when authorized.
 
 Continue using the two-branch policy in `CONTRIBUTING.md`: one coherent package per change, detailed commit message, PR from `perez` to `main`, no force-push/rebase of `main`, and post-merge reachability checks. Do not create CI workflows.
 
