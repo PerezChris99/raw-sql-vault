@@ -1,0 +1,4 @@
+CREATE OR REPLACE VIEW tourism_demo.v_permit_register AS SELECT p.permit_ref,e.establishment_ref,e.category,e.locality_code,p.permit_type,p.issued_on,p.expires_on,p.status,p.source_ref FROM tourism_demo.permits p JOIN tourism_demo.establishments e USING(establishment_id);
+CREATE OR REPLACE VIEW tourism_demo.v_expiry_watch AS SELECT * FROM tourism_demo.v_permit_register WHERE status='active' AND expires_on<CURRENT_DATE+INTERVAL '90 days';
+CREATE OR REPLACE VIEW tourism_demo.v_open_actions AS SELECT a.action_ref,i.inspection_ref,e.establishment_ref,a.summary,a.owner_ref,a.due_date,a.status FROM tourism_demo.actions a JOIN tourism_demo.inspections i USING(inspection_id) JOIN tourism_demo.establishments e USING(establishment_id) WHERE a.status NOT IN('closed','cancelled');
+CREATE OR REPLACE VIEW tourism_demo.v_overdue_actions AS SELECT * FROM tourism_demo.v_open_actions WHERE due_date<CURRENT_DATE;
