@@ -17,8 +17,8 @@ REVOKE ALL ON SCHEMA service_demo FROM PUBLIC;
 GRANT USAGE ON SCHEMA service_demo TO service_demo_reader, service_demo_operator;
 REVOKE ALL ON ALL TABLES IN SCHEMA service_demo FROM PUBLIC;
 GRANT SELECT ON ALL TABLES IN SCHEMA service_demo TO service_demo_reader;
-GRANT SELECT, INSERT, UPDATE ON service_demo.service_requests TO service_demo_operator;
-GRANT SELECT, INSERT ON service_demo.request_events TO service_demo_operator;
+GRANT SELECT, INSERT ON service_demo.service_requests TO service_demo_operator;
+GRANT SELECT ON service_demo.request_events TO service_demo_operator;
 GRANT SELECT ON service_demo.localities TO service_demo_operator;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA service_demo TO service_demo_operator;
 GRANT EXECUTE ON FUNCTION service_demo.fn_transition_request(BIGINT, TEXT, TEXT, TEXT)
