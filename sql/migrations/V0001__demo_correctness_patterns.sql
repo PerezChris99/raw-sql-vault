@@ -10,3 +10,8 @@
 \ir ../fixes/04_rolling_window.sql
 \ir ../fixes/05_spatial_dedup.sql
 \ir ../fixes/06_batch_insert_safety.sql
+\ir ../patterns/keyset_pagination.sql
+\ir ../patterns/rls_tenant_isolation.sql
+\ir ../patterns/audit_trigger.sql
+\ir ../patterns/soft_delete.sql
+\ir ../patterns/idempotent_upsert.sql
