@@ -88,6 +88,10 @@ Every implementation should include a problem statement, named user roles, data 
 9. SACCO ledger (40), as a synthetic-data educational prototype only.
 10. Aggregate service-access dashboard (54).
 
+## Current implementation mapping
+
+The roadmap candidate domains numbered 16–50 have been mapped to existing or newly merged packages. See [Uganda Implementation Checklist](UGANDA_IMPLEMENTATION_CHECKLIST.md) for exact paths, scope boundaries and outstanding validation gates. This does not mean all 116 directory entries have bespoke systems or that SQL execution has been verified.
+
 ## Project acceptance checklist
 
 - [ ] Problem and intended users validated; data owner and authority identified.

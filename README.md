@@ -236,6 +236,7 @@ A commit does not automatically advance a package's status. No package should be
 - [Master Index](docs/MASTER_INDEX.md) — planned domains and stable slugs.
 - [Phased Roadmap](docs/ROADMAP.md) — delivery scope, order, and acceptance gates.
 - [Implementation Status](docs/IMPLEMENTATION_STATUS.md) — current package coverage, evidence, and blockers.
+- [Uganda Implementation Checklist](docs/UGANDA_IMPLEMENTATION_CHECKLIST.md) — candidate-domain mapping, package paths, and remaining validation gates.
 - [Engineering Conventions](docs/CONVENTIONS.md) — naming, schema, migrations, security, and performance.
 - [Production Standards](docs/PRODUCTION_STANDARDS.md) — operational and production-readiness expectations.
 - [SQL Correctness Audit](docs/SQL_CORRECTNESS_AUDIT.md) — known correctness findings and status.
