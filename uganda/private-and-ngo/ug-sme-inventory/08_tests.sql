@@ -38,6 +38,14 @@ BEGIN
 
     BEGIN
         PERFORM sme_stock_demo.fn_record_stock_movement(
+            'DEMO-TEA-UG', -1, 'receipt', 'TEST-AUTOPILOT-INVALID-SIGN', 'test', 'test-suite'
+        );
+        RAISE EXCEPTION 'ASSERT negative receipt movement was accepted';
+    EXCEPTION WHEN invalid_parameter_value THEN NULL;
+    END;
+
+    BEGIN
+        PERFORM sme_stock_demo.fn_record_stock_movement(
             'DEMO-TEA-UG', -999999, 'sale', 'TEST-AUTOPILOT-STOCK-UNDERFLOW', 'test', 'test-suite'
         );
         RAISE EXCEPTION 'ASSERT negative stock movement was accepted';
