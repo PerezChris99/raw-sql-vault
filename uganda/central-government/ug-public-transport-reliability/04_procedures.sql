@@ -24,7 +24,7 @@ BEGIN
  INSERT INTO ug_transport.departure_observations(observation_ref,idempotency_key,schedule_id,observed_at,observation_status,delay_minutes,source_type,source_ref,recorded_by_ref,evidence_ref)
  VALUES(p_observation_ref,p_idempotency_key,s.schedule_id,p_observed_at,p_observation_status,p_delay_minutes,p_source_type,p_source_ref,p_actor_ref,p_evidence_ref)
  RETURNING observation_id INTO v_id;
- UPDATE ug_transport.departure_schedules SET status=CASE WHEN p_observation_status='not_observed' THEN status ELSE 'observed' END
+ UPDATE ug_transport.departure_schedules SET status=CASE WHEN p_observation_status='cancelled' THEN 'cancelled' WHEN p_observation_status='not_observed' THEN status ELSE 'observed' END
  WHERE schedule_id=s.schedule_id;
  RETURN v_id;
 END; $$;
