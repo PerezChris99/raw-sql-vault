@@ -10,7 +10,7 @@ CREATE OR REPLACE FUNCTION service_demo.fn_transition_request(
 )
 RETURNS BIGINT
 LANGUAGE plpgsql
-SECURITY INVOKER
+SECURITY DEFINER
 SET search_path = pg_catalog, service_demo
 AS $function$
 DECLARE
@@ -57,3 +57,5 @@ BEGIN
     RETURN p_request_id;
 END;
 $function$;
+
+REVOKE ALL ON FUNCTION service_demo.fn_transition_request(BIGINT, TEXT, TEXT, TEXT) FROM PUBLIC;
