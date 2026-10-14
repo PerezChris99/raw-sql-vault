@@ -38,4 +38,4 @@ jobs:
       - name: Validate test-runner shell syntax
         run: bash -n tools/run_sql_tests.sh
       - name: Run integrated SQL regression suites
-        run: tools/run_sql_tests.sh
+        run: bash tools/run_sql_tests.sh
