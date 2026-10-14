@@ -11,6 +11,10 @@ BEGIN
  RETURNING allocation_id INTO v_id;
  DELETE FROM education_demo.allocation_events WHERE allocation_id=v_id;
  PERFORM education_demo.fn_transition_allocation(v_id,'dispatched','fixture dispatch','test-suite',10,'TEST-DN');
+ BEGIN
+  PERFORM education_demo.fn_transition_allocation(v_id,'received','excess receipt','test-suite',11,'TEST-EXCESS-GRN');
+  RAISE EXCEPTION 'ASSERT excess receipt was accepted';
+ EXCEPTION WHEN invalid_parameter_value THEN NULL; END;
  PERFORM education_demo.fn_transition_allocation(v_id,'received','fixture receipt','test-suite',8,'TEST-GRN');
  SELECT status,dispatched_quantity,received_quantity INTO v_status,v_disp,v_recv FROM education_demo.allocations WHERE allocation_id=v_id;
  SELECT COUNT(*) INTO v_events FROM education_demo.allocation_events WHERE allocation_id=v_id;
@@ -18,10 +22,6 @@ BEGIN
  BEGIN
   PERFORM education_demo.fn_transition_allocation(v_id,'planned','invalid reverse','test-suite',NULL,NULL);
   RAISE EXCEPTION 'ASSERT reverse transition accepted';
- EXCEPTION WHEN check_violation THEN NULL; END;
- BEGIN
-  PERFORM education_demo.fn_transition_allocation(v_id,'received','excess receipt','test-suite',11,'TEST-EXCESS-GRN');
-  RAISE EXCEPTION 'ASSERT excess receipt was accepted';
  EXCEPTION WHEN check_violation THEN NULL; END;
 END; $test$;
 ROLLBACK;
