@@ -418,3 +418,17 @@ All code, documentation, and content herein are for the **exclusive personal use
   <strong>🔒 Private SQL Mastery Vault 🔒</strong><br>
   <em>Building enterprise-grade solutions, one query at a time.</em>
 </p>
+
+
+---
+
+## Beginner-first supplements and engineering roadmap
+
+The existing 21 lessons and 15 projects remain the core vault. These supplements audit gaps and extend the learning and project roadmap without replacing existing material:
+
+- [Beginner-first SQL gap review](docs/BEGINNER_SQL_GAP_REVIEW.md) — definitions, first queries, NULL handling, relationships, normalisation, transactions, SQL dialects, safe application integration, exercises, and review findings.
+- [SQL example audit notes](docs/SQL_EXAMPLE_AUDIT.md) — concrete correctness and portability checks to resolve in the existing examples.
+- [Uganda SQL project roadmap](docs/UGANDA_PROJECT_ROADMAP.md) — 43 additional project candidates for government, health, education, agriculture, utilities, SMEs, SACCOs, NGOs, and data infrastructure, with safeguards and build order.
+- [GitHub Flow and commit reachability](docs/GITHUB_FLOW.md) — pull-request workflow, branch divergence checks, safe cleanup, and SQL-specific CI recommendations.
+
+**Important:** Existing modules include engine-specific examples. Check each file's declared database engine and prerequisites before running it. Examples involving money, payroll, healthcare, public benefits, legal issues, or sensitive records are educational unless independently validated and reviewed for real deployment.
