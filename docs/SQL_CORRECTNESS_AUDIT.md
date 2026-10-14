@@ -22,7 +22,7 @@ Use only a disposable PostgreSQL 15+ database with PostGIS, never production:
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/vault_test bash tools/run_sql_tests.sh
 ```
 
-The runner requires an explicit DATABASE_URL. The CI workflow starts an ephemeral PostGIS container and runs the same entry point. At the time of writing, the observed GitHub Actions run failed before exposing any steps; no passing SQL execution result is claimed.
+The runner requires an explicit `DATABASE_URL`. The GitHub Actions workflow was removed at the repository owner's request. Earlier workflow attempts ended before exposing any steps (`runner_id=0`), so they do not establish SQL pass/fail. No passing SQL execution result is claimed; run this command on a disposable PostgreSQL 15+ / PostGIS database.
 
 ## Scope limitations
 
