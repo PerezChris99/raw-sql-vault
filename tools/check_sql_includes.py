@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-INCLUDE = re.compile(r"^\\s*\\ir\\s+([^\\s]+)\\s*$")
+INCLUDE = re.compile(r"^\s*\\ir\s+([^\s]+)\s*$")
 
 
 def walk(path: Path, seen: set[Path], active: set[Path]) -> list[str]:
@@ -59,7 +59,7 @@ def main() -> int:
     seen: set[Path] = set()
     errors = walk(entry, seen, set())
     if errors:
-        print("\\n".join(f"ERROR: {error}" for error in errors), file=sys.stderr)
+        print("\n".join(f"ERROR: {error}" for error in errors), file=sys.stderr)
         return 1
     print(f"PASS: {len(seen)} SQL/psql files reachable from {entry.relative_to(ROOT)}")
     return 0
