@@ -12,6 +12,8 @@ BEGIN
  DELETE FROM coop_demo.payments WHERE delivery_id=v_id;
  PERFORM coop_demo.fn_transition_delivery(v_id,'quality_checked','quality check recorded','test-suite','TEST-GRADE');
  PERFORM coop_demo.fn_transition_delivery(v_id,'approved','delivery approved','test-suite',NULL);
+ SELECT COUNT(*) INTO v_count FROM coop_demo.delivery_events WHERE delivery_id=v_id;
+ IF v_count<>2 THEN RAISE EXCEPTION 'ASSERT delivery status history expected two events, got %',v_count; END IF;
  v_pay_a:=coop_demo.fn_record_payment('TEST-COOP-PAY','TEST-AUTOPILOT-COOP',30000,'bank_transfer','TEST-PAY-REF','TEST-COOP-IDEM');
  v_pay_b:=coop_demo.fn_record_payment('TEST-COOP-PAY','TEST-AUTOPILOT-COOP',30000,'bank_transfer','TEST-PAY-REF','TEST-COOP-IDEM');
  IF v_pay_a<>v_pay_b THEN RAISE EXCEPTION 'ASSERT payment idempotency failed'; END IF;
