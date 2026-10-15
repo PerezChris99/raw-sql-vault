@@ -9,6 +9,8 @@ fail() { echo "FAIL: $*" >&2; exit 1; }
 command -v node >/dev/null 2>&1 || fail "Node.js is required for connector checks."
 command -v python3 >/dev/null 2>&1 || fail "Python 3 is required for connector checks."
 
+bash -n tools/lint_security.sh
+
 echo "Checking Node.js syntax and mocked connector regression tests..."
 node --check _infrastructure/connectors/nodejs/pg-connector.js
 node --check tests/connectors/nodejs/pg-connector.test.js

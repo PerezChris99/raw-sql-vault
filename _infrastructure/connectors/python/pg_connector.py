@@ -93,11 +93,13 @@ class RateLimiter:
             for key in list(self.requests):
                 if not any(t > window_start for t in self.requests[key]):
                     self.requests.pop(key, None)
+        if identifier not in self.requests and len(self.requests) >= 10000:
+            # Evict one oldest-insertion entry before adding a new identity.
+            # This bounds memory but is not a distributed rate-limit policy.
+            self.requests.pop(next(iter(self.requests)), None)
         self.requests[identifier] = [
             t for t in self.requests.get(identifier, []) if t > window_start
         ]
-        if len(self.requests) >= 10000 and identifier not in self.requests:
-            self.requests.pop(next(iter(self.requests)), None)
         
         if len(self.requests[identifier]) >= self.limit:
             return False, 0
@@ -234,8 +236,8 @@ class PostgresConnector:
             except Exception:
                 logger.exception("Rollback failed while returning a PostgreSQL connection.")
                 try:
-                    self._get_pool().putconn(conn, close=True)
                     discarded = True
+                    self._get_pool().putconn(conn, close=True)
                 except Exception:
                     logger.exception("Failed to discard a connection after rollback failure.")
                 raise
