@@ -46,57 +46,57 @@
 -- ============================================================================
 
 -- Security Administrator - manages security policies, views audit logs
-DO $
+DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'security_admin') THEN
         CREATE ROLE security_admin NOLOGIN;
     END IF;
-END $;
+END $$;
 COMMENT ON ROLE security_admin IS 'Security administration and audit access';
 
 -- Application Administrator - manages application schema and data
-DO $
+DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'app_admin') THEN
         CREATE ROLE app_admin NOLOGIN;
     END IF;
-END $;
+END $$;
 COMMENT ON ROLE app_admin IS 'Application schema and data administration';
 
 -- Backup Administrator - read-only access for backups
-DO $
+DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'backup_admin') THEN
         CREATE ROLE backup_admin NOLOGIN;
     END IF;
-END $;
+END $$;
 COMMENT ON ROLE backup_admin IS 'Read-only backup access';
 
 -- Application Write - can INSERT, UPDATE, DELETE application data
-DO $
+DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'app_write') THEN
         CREATE ROLE app_write NOLOGIN;
     END IF;
-END $;
+END $$;
 COMMENT ON ROLE app_write IS 'Application data modification';
 
 -- Application Read - SELECT only on application data
-DO $
+DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'app_read') THEN
         CREATE ROLE app_read NOLOGIN;
     END IF;
-END $;
+END $$;
 COMMENT ON ROLE app_read IS 'Read-only application access';
 
 -- Audit Viewer - can view audit logs (for compliance)
-DO $
+DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'audit_viewer') THEN
         CREATE ROLE audit_viewer NOLOGIN;
     END IF;
-END $;
+END $$;
 COMMENT ON ROLE audit_viewer IS 'Audit log read access';
 
 -- ============================================================================
