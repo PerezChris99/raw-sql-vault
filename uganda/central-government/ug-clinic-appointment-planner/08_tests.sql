@@ -5,7 +5,25 @@ BEGIN;
 DO $test$
 DECLARE v_count BIGINT; v_status TEXT; v_first_id BIGINT; v_replay_id BIGINT;
 BEGIN
- PERFORM ug_clinic_sched.fn_book_appointment('UGAPT-DEMO-0001','appt-idem-test-0001','UGSLOT-TEST-001','SYN-PATIENT-001','test-clerk');
+ -- Dedicated test slots stay future-dated and separate from the public demo seed slots.
+ INSERT INTO ug_clinic_sched.slots(slot_ref,clinic_id,service_id,clinician_ref,starts_at,ends_at,status)
+ SELECT v.slot_ref,c.clinic_id,s.service_id,v.clinician_ref,v.starts_at,
+        v.starts_at+make_interval(mins=>s.default_duration_minutes),'open'
+ FROM (VALUES
+  ('UGSLOT-TEST-001','UGCL-DEMO-001','DEMO-CONSULT','SYN-CLINICIAN-TEST-01',now()+INTERVAL '2 days'),
+  ('UGSLOT-TEST-002','UGCL-DEMO-001','DEMO-CONSULT','SYN-CLINICIAN-TEST-01',now()+INTERVAL '2 days 30 minutes')
+ ) AS v(slot_ref,clinic_ref,service_code,clinician_ref,starts_at)
+ JOIN ug_clinic_sched.clinics c ON c.clinic_ref=v.clinic_ref
+ JOIN ug_clinic_sched.services s ON s.service_code=v.service_code;
+
+ v_first_id:=ug_clinic_sched.fn_book_appointment('UGAPT-DEMO-0001','appt-idem-test-0001','UGSLOT-TEST-001','SYN-PATIENT-001','test-clerk');
+ v_replay_id:=ug_clinic_sched.fn_book_appointment('UGAPT-DEMO-0001','appt-idem-test-0001','UGSLOT-TEST-001','SYN-PATIENT-001','test-clerk');
+ IF v_first_id<>v_replay_id THEN RAISE EXCEPTION 'ASSERT matching idempotent replay did not return original appointment'; END IF;
+
+ BEGIN
+  PERFORM ug_clinic_sched.fn_book_appointment('UGAPT-DEMO-0099','appt-idem-test-0001','UGSLOT-TEST-001','SYN-PATIENT-999','test-clerk');
+  RAISE EXCEPTION 'ASSERT idempotency key reuse with a different request was accepted';
+ EXCEPTION WHEN unique_violation THEN NULL; END;
 
  BEGIN
   PERFORM ug_clinic_sched.fn_book_appointment('UGAPT-DEMO-0002','appt-idem-test-0002','UGSLOT-TEST-001','SYN-PATIENT-002','test-clerk');
