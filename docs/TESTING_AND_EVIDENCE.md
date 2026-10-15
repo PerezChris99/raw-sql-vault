@@ -18,7 +18,9 @@ A schema, migration, test script, or security file is not proof that it works. S
 ## Existing commands
 Static inventory: run `bash tools/lint_sql.sh` from the repository root.
 
-Connector and security static checks: run `bash tools/lint_security.sh`. This parses Node.js files, executes the mocked Node connector regression tests, compiles Python source, and checks for known unsafe patterns. It is not a substitute for PostgreSQL execution or a history-aware secret scanner.
+Connector and security static checks: run `bash tools/lint_security.sh`.
+
+Secret scan: install a trusted current Gitleaks release, fetch every intended remote ref, then run `bash tools/scan_secrets.sh`. This scans the working tree and locally reachable history; it cannot inspect refs/history that were not fetched. A finding requires triage and immediate rotation where a real credential is exposed. A clean scan is evidence for the scanned snapshot, not proof that no secret exists. This parses Node.js files, executes the mocked Node connector regression tests, compiles Python source, and checks for known unsafe patterns. It is not a substitute for PostgreSQL execution or a history-aware secret scanner.
 
 Integrated SQL suite: set DATABASE_URL to a disposable PostgreSQL 15+ test database and run bash tools/run_sql_tests.sh. Install required extensions such as PostGIS only when needed. Never target production or valuable data. Keep credentials out of source and issues.
 

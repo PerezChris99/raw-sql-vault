@@ -174,6 +174,7 @@ From the repository root:
 ```bash
 bash tools/lint_sql.sh
 bash tools/lint_security.sh
+bash tools/scan_secrets.sh
 ```
 
 This checks shell syntax, recursive psql include paths, and the presence of required package files. It is a static inventory check; it does **not** execute SQL or prove that migrations and assertions pass.
@@ -249,6 +250,7 @@ A commit does not automatically advance a package's status. No package should be
 - [Connector Static Audit](docs/CONNECTOR_STATIC_AUDIT.md) — original source-review findings.
 - [Connector Remediation Notes](_infrastructure/connectors/README.md) — implemented fixes, safe-use boundaries, and validation status.
 - [Security Remediation Runbook](docs/SECURITY_REMEDIATION_RUNBOOK.md) — credential rotation and safe RBAC recovery.
+- [Secret Scanning](tools/scan_secrets.sh) — current-tree and reachable-history scanning with Gitleaks.
 - [Performance and Scalability](docs/PERFORMANCE_AND_SCALABILITY.md) — measurement-first performance guidance.
 - [Operations, Backup and Restore](docs/OPERATIONS_BACKUP_RESTORE.md) — recovery planning and restore evidence.
 - [Data Governance](docs/DATA_GOVERNANCE.md) — privacy, provenance, retention, and sensitive domains.
