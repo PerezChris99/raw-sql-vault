@@ -16,8 +16,9 @@ node --check _infrastructure/connectors/nodejs/pg-connector.js
 node --check tests/connectors/nodejs/pg-connector.test.js
 node --test tests/connectors/nodejs/*.test.js
 
-echo "Checking Python connector syntax..."
+echo "Checking Python connector syntax and mocked regression tests..."
 PYTHONPYCACHEPREFIX="${TMPDIR:-/tmp}/raw-sql-vault-pycache" python3 -m py_compile _infrastructure/connectors/python/pg_connector.py
+python3 -m unittest discover -s tests/connectors/python -p 'test_*.py'
 
 echo "Checking known-dangerous patterns..."
 if grep -Eq "SET app\\.current_(tenant_id|user_id|roles)[[:space:]]*=[[:space:]]*[$%]" _infrastructure/connectors/nodejs/pg-connector.js _infrastructure/connectors/python/pg_connector.py; then
