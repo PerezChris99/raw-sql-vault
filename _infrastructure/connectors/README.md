@@ -42,12 +42,13 @@ From the repository root:
 
 ```bash
 node --test tests/connectors/nodejs/*.test.js
+python3 -m unittest discover -s tests/connectors/python -p 'test_*.py'
 node --check _infrastructure/connectors/nodejs/pg-connector.js
 python -m py_compile _infrastructure/connectors/python/pg_connector.py
 bash tools/lint_sql.sh
 ```
 
-The Node tests mock the pg client and validate connector control flow only. They do **not** prove PostgreSQL RLS semantics, TLS handshake correctness, PgBouncer compatibility, Python driver behaviour, concurrency, or performance. Those require integration testing against a disposable, version-pinned PostgreSQL instance with the required extensions and actual database roles.
+The Node and Python tests mock their drivers and validate connector control flow only. They do **not** prove PostgreSQL RLS semantics, TLS handshake correctness, PgBouncer compatibility, Python driver behaviour, concurrency, or performance. Those require integration testing against a disposable, version-pinned PostgreSQL instance with the required extensions and actual database roles.
 
 ## Current validation boundary
 
