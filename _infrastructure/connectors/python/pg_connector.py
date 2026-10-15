@@ -17,6 +17,7 @@ import os
 import time
 import uuid
 import logging
+import ssl as ssl_module
 from typing import Any, Dict, List, Optional, Tuple, Union
 from contextlib import contextmanager, asynccontextmanager
 from dataclasses import dataclass, field
@@ -78,16 +79,25 @@ class RateLimiter:
         self.limit = limit
         self.window_seconds = window_seconds
         self.requests: Dict[str, List[float]] = defaultdict(list)
+        self._checks = 0
     
     def check(self, identifier: str) -> Tuple[bool, int]:
         """Check if request is allowed. Returns (allowed, remaining)."""
         now = time.time()
         window_start = now - self.window_seconds
         
-        # Clean old requests
+        # Bound memory under high-cardinality identifiers. An unbounded map can
+        # turn a simple rate limiter into a memory-exhaustion vector.
+        self._checks += 1
+        if self._checks % 100 == 0:
+            for key in list(self.requests):
+                if not any(t > window_start for t in self.requests[key]):
+                    self.requests.pop(key, None)
         self.requests[identifier] = [
-            t for t in self.requests[identifier] if t > window_start
+            t for t in self.requests.get(identifier, []) if t > window_start
         ]
+        if len(self.requests) >= 10000 and identifier not in self.requests:
+            self.requests.pop(next(iter(self.requests)), None)
         
         if len(self.requests[identifier]) >= self.limit:
             return False, 0
@@ -171,7 +181,8 @@ class PostgresConnector:
             allowed_ssl_modes = {"disable", "allow", "prefer", "require", "verify-ca", "verify-full"}
             if p.ssl_mode not in allowed_ssl_modes:
                 raise ValueError(f"Unsupported ssl_mode: {p.ssl_mode}")
-            if os.getenv("NODE_ENV") == "production" and p.ssl_mode not in {"verify-ca", "verify-full"}:
+            environment = os.getenv("APP_ENV", os.getenv("ENVIRONMENT", "")).lower()
+            if environment == "production" and p.ssl_mode not in {"verify-ca", "verify-full"}:
                 raise ValueError("Production requires DB_SSL_MODE=verify-ca or verify-full.")
             self._pool = pool.ThreadedConnectionPool(
                 minconn=p.min_connections,
@@ -200,6 +211,7 @@ class PostgresConnector:
         not authenticate direct SQL callers and must not carry client-chosen roles.
         """
         conn = self._get_pool().getconn()
+        discarded = False
         try:
             with conn.cursor() as cur:
                 cur.execute("SELECT set_config('statement_timeout', %s, true)", [f"{self.config.statement_timeout_ms}ms"])
@@ -223,6 +235,7 @@ class PostgresConnector:
                 logger.exception("Rollback failed while returning a PostgreSQL connection.")
                 try:
                     self._get_pool().putconn(conn, close=True)
+                    discarded = True
                 except Exception:
                     logger.exception("Failed to discard a connection after rollback failure.")
                 raise
@@ -230,7 +243,7 @@ class PostgresConnector:
         finally:
             # psycopg2's pool resets transaction state on return; commit/rollback
             # above ensures the connection is not returned with an open transaction.
-            if not conn.closed:
+            if not discarded and not conn.closed:
                 try:
                     self._get_pool().putconn(conn)
                 except Exception:
@@ -438,12 +451,29 @@ if ASYNC_AVAILABLE:
         async def _init_pool(self):
             """Initialize the connection pool."""
             p = self.config.pool
+            environment = os.getenv("APP_ENV", os.getenv("ENVIRONMENT", "")).lower()
+            if environment == "production" and p.ssl_mode not in {"verify-ca", "verify-full"}:
+                raise ValueError("Production async connections require verified TLS.")
+            if p.ssl_mode not in {"disable", "allow", "prefer", "require", "verify-ca", "verify-full"}:
+                raise ValueError(f"Unsupported ssl_mode: {p.ssl_mode}")
+            # asyncpg accepts an SSLContext, not libpq's sslmode string. Use Python's
+            # certificate store and hostname verification for verify-full.
+            if p.ssl_mode == "disable":
+                ssl_context = False
+            elif p.ssl_mode == "verify-full":
+                ssl_context = ssl_module.create_default_context()
+            elif p.ssl_mode in {"verify-ca", "require"}:
+                ssl_context = ssl_module.create_default_context()
+                ssl_context.check_hostname = False
+            else:
+                ssl_context = True
             self._pool = await asyncpg.create_pool(
                 host=p.host,
                 port=p.port,
                 database=p.database,
                 user=p.user,
                 password=p.password,
+                ssl=ssl_context,
                 min_size=p.min_connections,
                 max_size=p.max_connections,
                 command_timeout=self.config.statement_timeout_ms / 1000,

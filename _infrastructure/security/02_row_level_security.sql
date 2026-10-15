@@ -27,7 +27,7 @@ BEGIN
         ''
     );
 END;
-$ LANGUAGE plpgsql STABLE;
+$$ LANGUAGE plpgsql STABLE;
 
 -- ============================================================================
 -- USER CONTEXT PATTERN  
@@ -42,7 +42,7 @@ BEGIN
         ''
     );
 END;
-$ LANGUAGE plpgsql STABLE;
+$$ LANGUAGE plpgsql STABLE;
 
 -- ============================================================================
 -- ROLE-BASED ACCESS PATTERN
@@ -57,7 +57,7 @@ BEGIN
         ','
     );
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION security.has_app_role(p_role TEXT)
 RETURNS BOOLEAN AS $$
@@ -73,7 +73,8 @@ BEGIN
           AND member_role.rolname = session_user
     ) OR session_user = p_role;
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = pg_catalog;
+
 
 -- ============================================================================
 -- RLS HELPER: Enable RLS on a table with tenant isolation
@@ -228,7 +229,7 @@ BEGIN
             RETURN '***MASKED***';
     END CASE;
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE;
 
 -- ============================================================================
 -- DATA CLASSIFICATION LABELS

@@ -245,7 +245,8 @@ A commit does not automatically advance a package's status. No package should be
 - [GitHub Flow](docs/GITHUB_FLOW.md) — branch history and review discipline.
 - [Public Release Disclaimer](docs/PUBLIC_RELEASE_DISCLAIMER.md) — limitations, non-endorsement, and safe use.
 - [Security and Threat Model](docs/SECURITY_AND_THREAT_MODEL.md) — database trust boundaries and controls.
-- [Connector Static Audit](docs/CONNECTOR_STATIC_AUDIT.md) — current findings in shared connector and infrastructure examples.
+- [Connector Static Audit](docs/CONNECTOR_STATIC_AUDIT.md) — original source-review findings.
+- [Connector Remediation Notes](_infrastructure/connectors/README.md) — implemented fixes, safe-use boundaries, and validation status.
 - [Performance and Scalability](docs/PERFORMANCE_AND_SCALABILITY.md) — measurement-first performance guidance.
 - [Operations, Backup and Restore](docs/OPERATIONS_BACKUP_RESTORE.md) — recovery planning and restore evidence.
 - [Data Governance](docs/DATA_GOVERNANCE.md) — privacy, provenance, retention, and sensitive domains.

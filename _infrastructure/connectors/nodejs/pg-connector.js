@@ -106,13 +106,6 @@ class PostgresConnector {
     // ========================================================================
 
     /**
-     * Execute a parameterized query (SAFE from SQL injection)
-     * @param {string} text - SQL query with $1, $2, etc. placeholders
-     * @param {any[]} [params=[]] - Array of parameter values
-     * @param {{tenantId?: string, userId?: string, requestId?: string}} [context] - Optional context for auditing
-     * @returns {Promise<import('pg').QueryResult>}
-     */
-    /**
      * Execute one SQL statement safely.
      *
      * Plain language: values such as tenant IDs are scoped to this transaction,
@@ -303,10 +296,6 @@ class PostgresConnector {
      * @param {number} ms
      * @returns {Promise<void>}
      */
-    _sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
     /**
      * Generate a request ID for tracing
      * @returns {string}
@@ -350,8 +339,9 @@ function createConnector(projectName, overrides = {}) {
 
     // Plain language: production connections must encrypt traffic and verify the
     // database certificate. Local development may explicitly opt out; production may not.
-    if (process.env.NODE_ENV === 'production' && process.env.DB_SSL !== 'true') {
-        throw new Error('Production requires DB_SSL=true with certificate verification.');
+    if (process.env.NODE_ENV === 'production' &&
+        !(config.pool.ssl && typeof config.pool.ssl === 'object' && config.pool.ssl.rejectUnauthorized === true)) {
+        throw new Error('Production requires TLS with certificate verification (DB_SSL=true and no insecure override).');
     }
     if (!Number.isInteger(config.pool.max) || config.pool.max < 1 || config.pool.max > 200) {
         throw new Error('DB_POOL_MAX must be an integer between 1 and 200.');
