@@ -6,6 +6,10 @@
 -- Shared SQL correctness patterns and assertions.
 \ir run_all.sql
 
+-- Authenticated-login tenant isolation: requires trusted test DBA privileges.
+\ir ../../shared/security/tenant_isolation.sql
+\ir 11_authenticated_tenant_isolation.sql
+
 -- Phase 1 representative: OPM programme action register.
 \ir ../../uganda/central-government/ug-opm/migrations/V0001__opm_action_demo.sql
 \ir ../../uganda/central-government/ug-opm/08_tests.sql
