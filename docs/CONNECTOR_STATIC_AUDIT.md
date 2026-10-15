@@ -4,6 +4,25 @@
 **Scope:** selected shared Node.js/Python PostgreSQL connectors, PgBouncer example, and shared RBAC/RLS SQL.  
 **Method:** source inspection through the repository tree. No connector unit tests, PostgreSQL execution, PgBouncer execution, penetration test, or secret-history scan was run. Findings are static-review findings and require reproduction and remediation evidence.
 
+## Remediation status after PRs #95–#97
+
+The original findings below describe what the source review found at the time. The following source changes have since been merged. **Runtime verification remains pending**, so “remediated in source” must not be read as “verified safe in production.”
+
+| Original finding | Source status | Remaining evidence |
+|---|---|---|
+| Invalid parameterized SET statements | Replaced with parameterized, transaction-local set_config calls | Execute Node/Python connector tests against PostgreSQL |
+| Pooled context leakage | Context is transaction-local and cleanup/rollback handling was improved | Verify pool reuse, exceptions, and transaction pooling on real PostgreSQL/PgBouncer |
+| Blind retries of arbitrary SQL | Removed from Node and Python connectors | Exercise deadlocks, serialization failures, disconnects, and ambiguous writes |
+| Known placeholder passwords | Removed from executable role creation | Scan reachable history; rotate credentials in any database that ran the old script |
+| PgBouncer MD5 and TLS ambiguity | Template now uses SCRAM-SHA-256 and explicit client/backend TLS | Start the exact deployed version with real certificates and test authentication/hostname failure |
+| Python DSN interpolation and weak TLS default | Structured libpq parameters and verify-full default; asyncpg receives an SSL context | Run Python driver and TLS integration tests |
+| Caller-settable role GUC used as admin proof | Generic admin bypass removed; privileged helper checks database role membership | Execute RLS adversarial test with actual roles |
+| Shared tenant GUC spoofing | **Known architectural limitation**; documentation explicitly requires trusted backend-only access or tenant-specific DB roles | Select and verify the actual deployment trust model; this cannot be solved by a lint rule alone |
+| Destructive/non-idempotent RBAC bootstrap | Destructive role cleanup removed; group role creation made idempotent | Run bootstrap twice on a disposable database and inspect grants/ownership |
+| Missing regression coverage | Mocked Node tests and a disposable-DB RLS test added | Execute them; add Python driver tests and record output |
+
+The connector implementation also does not provide an audit-log sink. The legacy audit flag is retained for compatibility only and defaults to disabled. Do not claim audit events are being written unless an actual protected audit pipeline is deployed and tested.
+
 ## Executive summary
 
 The shared connector and infrastructure examples currently contain issues that block describing them as production-ready. These examples should be treated as educational starting points until the tracked issues are fixed and tested.
@@ -30,19 +49,19 @@ Tracked in [issue #87](https://github.com/PerezChris99/raw-sql-vault/issues/87).
 
 ### 4. Executable role bootstrap contains known placeholder passwords
 
-The shared RBAC SQL creates login roles with the literal password CHANGE_IN_PRODUCTION. If executed unchanged, it creates credentials that are known from source. The idempotent role-creation blocks do not automatically rotate an existing role's password. Replace executable password literals with a controlled provisioning process and separate NOLOGIN group roles from login identities.
+The original RBAC SQL created login roles with the literal password CHANGE_IN_PRODUCTION. The current source no longer embeds that password and creates missing login roles without a password, so password authentication must be provisioned out of band. This does not rotate credentials on databases that ran the older script; use the credential remediation runbook and perform a history-aware secret scan.
 
 Tracked in [issue #88](https://github.com/PerezChris99/raw-sql-vault/issues/88).
 
 ### 5. PgBouncer sample's production claims need qualification
 
-The example shows MD5 authentication, transaction pooling, and TLS options commented out. Production settings need an explicit supported-version/authentication decision, certificate verification, and documented session-state limitations. Session variables, prepared statements, temporary tables, advisory locks, and other features may behave differently under transaction pooling.
+The original example used MD5 authentication and left TLS settings commented out. The current template uses SCRAM-SHA-256, requires client TLS, and verifies backend TLS. The exact PgBouncer version, certificates, auth-file format, and session-state compatibility still require runtime validation.
 
 Tracked in [issue #89](https://github.com/PerezChris99/raw-sql-vault/issues/89).
 
 ### 6. Python connector builds a DSN by interpolating values and defaults to sslmode=prefer
 
-The Python connector constructs a libpq DSN using string interpolation of host, database, username, and password. Special characters can break the DSN and unsafe values can alter its interpretation. The default sslmode=prefer does not require verified TLS. Use structured connection parameters or a safely quoted DSN, avoid logging credentials, and define secure production TLS settings.
+The original Python connector interpolated connection values into a DSN and defaulted to sslmode=prefer. The current source passes structured parameters and defaults to verify-full; asyncpg receives an SSL context. Run driver tests for special-character credentials, certificate verification, and hostname mismatch before treating the fix as verified.
 
 Tracked in [issue #90](https://github.com/PerezChris99/raw-sql-vault/issues/90).
 
