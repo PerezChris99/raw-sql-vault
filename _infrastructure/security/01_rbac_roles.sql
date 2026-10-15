@@ -36,42 +36,67 @@
 --    └─────────────┘
 -- ============================================================================
 
--- Drop existing roles if recreating
-DO $$
-BEGIN
-    -- Only drop if exists (idempotent)
-    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_user') THEN
-        REASSIGN OWNED BY app_user TO postgres;
-        DROP OWNED BY app_user;
-    END IF;
-END $$;
+-- Do not drop/reassign application roles during an idempotent bootstrap.
+-- Plain language: dropping ownership or grants during a rerun can unexpectedly break
+-- an existing deployment. This script creates missing roles and adjusts intended grants;
+-- destructive role migrations require a separately reviewed, explicit migration.
 
 -- ============================================================================
 -- CREATE BASE ROLES (NOLOGIN - these are role groups)
 -- ============================================================================
 
 -- Security Administrator - manages security policies, views audit logs
-CREATE ROLE security_admin NOLOGIN;
+DO $
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'security_admin') THEN
+        CREATE ROLE security_admin NOLOGIN;
+    END IF;
+END $;
 COMMENT ON ROLE security_admin IS 'Security administration and audit access';
 
 -- Application Administrator - manages application schema and data
-CREATE ROLE app_admin NOLOGIN;
+DO $
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'app_admin') THEN
+        CREATE ROLE app_admin NOLOGIN;
+    END IF;
+END $;
 COMMENT ON ROLE app_admin IS 'Application schema and data administration';
 
 -- Backup Administrator - read-only access for backups
-CREATE ROLE backup_admin NOLOGIN;
+DO $
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'backup_admin') THEN
+        CREATE ROLE backup_admin NOLOGIN;
+    END IF;
+END $;
 COMMENT ON ROLE backup_admin IS 'Read-only backup access';
 
 -- Application Write - can INSERT, UPDATE, DELETE application data
-CREATE ROLE app_write NOLOGIN;
+DO $
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'app_write') THEN
+        CREATE ROLE app_write NOLOGIN;
+    END IF;
+END $;
 COMMENT ON ROLE app_write IS 'Application data modification';
 
 -- Application Read - SELECT only on application data
-CREATE ROLE app_read NOLOGIN;
+DO $
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'app_read') THEN
+        CREATE ROLE app_read NOLOGIN;
+    END IF;
+END $;
 COMMENT ON ROLE app_read IS 'Read-only application access';
 
 -- Audit Viewer - can view audit logs (for compliance)
-CREATE ROLE audit_viewer NOLOGIN;
+DO $
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'audit_viewer') THEN
+        CREATE ROLE audit_viewer NOLOGIN;
+    END IF;
+END $;
 COMMENT ON ROLE audit_viewer IS 'Audit log read access';
 
 -- ============================================================================
@@ -91,6 +116,8 @@ GRANT audit_viewer TO security_admin; -- Security admins can view audits
 -- a real vulnerability if someone executes this file unchanged.
 -- Technical: LOGIN roles without a password cannot authenticate with password auth
 -- until provisioned. Configure SCRAM secrets and TLS in the deployment environment.
+-- If an older copy of this script was run, rotate/revoke the previously known password
+-- through a planned DBA operation; this idempotent bootstrap does not silently rotate it.
 -- Do not store secrets in this SQL file or in Git history.
 
 -- Application service account (used by backend)

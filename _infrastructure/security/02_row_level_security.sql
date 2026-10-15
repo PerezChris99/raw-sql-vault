@@ -198,7 +198,7 @@ CREATE OR REPLACE FUNCTION security.mask_pii(
 RETURNS TEXT AS $$
 BEGIN
     -- Privileged visibility is based on actual database-role membership, never caller-set text.
-    IF security.has_app_role('admin') OR security.has_app_role('data_admin') THEN
+    IF security.has_app_role('app_admin') OR security.has_app_role('security_admin') OR security.has_app_role('data_admin') THEN
         RETURN p_value;
     END IF;
     
