@@ -2,7 +2,7 @@
 
 **A structured SQL learning, database engineering, and domain-solution portfolio.**  
 **Primary dialect:** PostgreSQL 15+ · **Additional dialects:** MySQL 8 and SQL Server 2019 where explicitly documented  
-**Repository status:** Private, proprietary workspace · **Validation status:** SQL execution must be confirmed per package
+**Repository status:** Private pre-release workspace · **Validation status:** package-level SQL execution evidence is required before verification claims
 
 Raw SQL Vault combines a progressive SQL curriculum with reusable engineering patterns and small, independently reviewable database solution packages. It prioritises Uganda-relevant public-service and private-sector problems, then extends to worldwide domains and shared analytics infrastructure. The catalogue is a plan and navigation aid—not a claim that every indexed system is implemented, officially endorsed, compliant, or production-ready.
 
@@ -243,6 +243,17 @@ A commit does not automatically advance a package's status. No package should be
 - [Beginner SQL Gap Review](docs/BEGINNER_SQL_GAP_REVIEW.md) — curriculum gaps and learning prerequisites.
 - [Curriculum Supplement](docs/CURRICULUM_SUPPLEMENT.md) — beginner-to-practitioner progression.
 - [GitHub Flow](docs/GITHUB_FLOW.md) — branch history and review discipline.
+- [Public Release Disclaimer](docs/PUBLIC_RELEASE_DISCLAIMER.md) — limitations, non-endorsement, and safe use.
+- [Security and Threat Model](docs/SECURITY_AND_THREAT_MODEL.md) — database trust boundaries and controls.
+- [Performance and Scalability](docs/PERFORMANCE_AND_SCALABILITY.md) — measurement-first performance guidance.
+- [Operations, Backup and Restore](docs/OPERATIONS_BACKUP_RESTORE.md) — recovery planning and restore evidence.
+- [Data Governance](docs/DATA_GOVERNANCE.md) — privacy, provenance, retention, and sensitive domains.
+- [Testing and Evidence](docs/TESTING_AND_EVIDENCE.md) — test levels and status claims.
+- [Migration and Deployment](docs/MIGRATION_AND_DEPLOYMENT.md) — safe schema evolution.
+- [Incident Response](docs/INCIDENT_RESPONSE.md) — database incident handling.
+- [Engine Support Matrix](docs/ENGINE_SUPPORT_MATRIX.md) — tested versus unverified dialects.
+- [Release Readiness Checklist](docs/RELEASE_READINESS_CHECKLIST.md) — go/no-go gates.
+- [Licensing and Reuse Decision](docs/LICENSING_AND_REUSE.md) — blocking license decision.
 - [Contribution Guide](CONTRIBUTING.md) — mandatory commit and merge workflow.
 
 ## Limitations and data-use policy
@@ -251,9 +262,21 @@ All example datasets must be synthetic unless a specific, authorised public data
 
 References to public bodies or regulated industries describe example problem domains; they do not imply official sponsorship, endorsement, legal compliance, certification, or permission to integrate. Standards-aligned naming is not proof of conformance.
 
-## Ownership
+## Public release status and disclaimer
 
-Raw SQL Vault is a private, proprietary repository. Access and reuse are governed by the repository owner's policy and applicable law. This repository does not grant an open-source licence or redistribution rights.
+**Release state: not yet approved for public release.** This repository is being prepared for public consumption, but private visibility remains intentional while release gates are resolved. Documentation is not certification of correctness, security, legal compliance, performance, or operational suitability.
+
+Raw SQL Vault is an educational and engineering reference library. Materials are provided “as is” and “as available,” to the maximum extent permitted by applicable law. No guarantee is made that every script executes, every invariant is enforced across all write paths, every race condition is tested, or any database will never crash, slow down, lose availability, or lose data. Performance depends on engine/version, hardware, storage, network, schema, data distribution, concurrency, configuration, and workload.
+
+Do not run examples against production or valuable data without independent review, testing on the declared engine/version, and adaptation to the target environment. Use disposable databases for tests. Back up data and verify restoration before migrations. Static lint or passing tests on one environment do not establish production readiness elsewhere.
+
+The repository is not legal, financial, medical, accounting, tax, cybersecurity, safety, or regulatory advice. Institutional names and workflows are illustrative and do not imply official endorsement, affiliation, certification, legal compliance, or permission to integrate. High-impact workflows require accountable human, legal, privacy, security, and domain review.
+
+Fixtures must be synthetic unless a specific dataset has documented provenance, lawful reuse rights, and approval. Never publish credentials, personal data, private operational records, or confidential institutional information.
+
+## Ownership and licensing status
+
+The repository owner has not yet approved a public reuse license. Until a license is selected, added, and reviewed, no open-source or redistribution permission is granted. Public visibility does not itself grant reuse rights. See [Licensing and Reuse Decision](docs/LICENSING_AND_REUSE.md) and [issue #72](https://github.com/PerezChris99/raw-sql-vault/issues/72).
 
 ---
 
