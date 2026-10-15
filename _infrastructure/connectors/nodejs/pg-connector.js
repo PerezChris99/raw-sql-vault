@@ -1,13 +1,12 @@
 /**
- * Raw SQL Vault - Production PostgreSQL Connector
+ * Raw SQL Vault - PostgreSQL Connector Reference Implementation
  * Node.js (Pure JavaScript - No TypeScript required)
  * 
  * Features:
  * - Connection pooling with PgBouncer support
  * - Explicit transactions with transaction-local context
- * - Query parameterization (injection-safe)
+ * - Parameterized query values (when used correctly)
  * - Rate limiting integration
- * - Audit logging
  * - Health checks
  * - TLS/SSL support
  */
@@ -35,15 +34,16 @@ const crypto = require('crypto');
 /**
  * @typedef {Object} ConnectorConfig
  * @property {PoolConfig} pool
- * @property {number} retryAttempts @deprecated No arbitrary-statement retries are performed.
- * @property {number} retryDelayMs @deprecated No arbitrary-statement retries are performed.
+ * @property {number} retryAttempts @deprecated Retained for compatibility; arbitrary SQL is never retried.
+ * @property {number} retryDelayMs @deprecated Retained for compatibility; arbitrary SQL is never retried.
  * @property {number} statementTimeout
  * @property {string} [defaultTenant]
- * @property {boolean} enableAudit
+ * @property {boolean} enableAudit @deprecated No audit sink is implemented by this reference connector.
  * @property {number} rateLimitPerMinute
  */
 
 const DEFAULT_CONFIG = {
+    // Retained for backwards-compatible config shape; intentionally unused.
     retryAttempts: 3,
     retryDelayMs: 1000,
     statementTimeout: 30000,
@@ -333,7 +333,7 @@ function createConnector(projectName, overrides = {}) {
         retryAttempts: 3,
         retryDelayMs: 1000,
         statementTimeout: 30000,
-        enableAudit: true,
+        enableAudit: false,
         rateLimitPerMinute: 100,
     };
 

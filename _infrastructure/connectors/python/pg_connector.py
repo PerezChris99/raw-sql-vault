@@ -1,11 +1,11 @@
 """
-Raw SQL Vault - Production PostgreSQL Connector
+Raw SQL Vault - PostgreSQL Connector Reference Implementation
 Python 3.9+
 
 Features:
 - Connection pooling with PgBouncer support
 - Explicit transaction boundaries and transaction-local request context
-- Query parameterization (injection-safe)
+- Parameterized query values (when used correctly)
 - Rate limiting integration
 - Context managers for transactions
 - Health checks
@@ -61,10 +61,12 @@ class PoolConfig:
 class ConnectorConfig:
     """Full connector configuration."""
     pool: PoolConfig = field(default_factory=PoolConfig)
+    # Deprecated compatibility fields. Arbitrary statements are never auto-retried.
     retry_attempts: int = 3
     retry_delay_seconds: float = 1.0
     statement_timeout_ms: int = 30000
-    enable_audit: bool = True
+    # Reserved for compatibility; this connector does not implement an audit sink.
+    enable_audit: bool = False
     rate_limit_per_minute: int = 100
 
 
@@ -114,7 +116,10 @@ class RateLimiter:
 
 class PostgresConnector:
     """
-    Production-ready PostgreSQL connector with security features.
+    Reference PostgreSQL connector with bounded resource controls and safe defaults.
+
+    It is not a complete authorization layer, distributed rate limiter, audit service,
+    or production operations platform. Deployment-specific verification is mandatory.
     
     Usage:
         connector = PostgresConnector.create('refugee_aid_allocator')
@@ -263,7 +268,10 @@ class PostgresConnector:
         fetch: str = 'all'  # 'all', 'one', 'none'
     ) -> Union[List[Dict], Dict, None]:
         """
-        Execute a parameterized query (SAFE from SQL injection).
+        Execute a parameterized query.
+
+        Parameter binding protects values when used correctly; it does not make
+        interpolated SQL fragments or dynamic identifiers safe.
         
         Args:
             sql_text: SQL with %s placeholders
