@@ -17,7 +17,8 @@ database_name="$(psql "$DATABASE_URL" -X -A -t -v ON_ERROR_STOP=1 -c 'SELECT cur
 if [[ -z "$database_name" || "$database_name" == *$'\n'* ]]; then
   echo "ERROR: Could not determine a single database name." >&2; exit 2
 fi
-base="raw-sql-vault-${database_name}-${timestamp}"
+safe_database_name="$(printf '%s' "$database_name" | tr -c 'A-Za-z0-9._-' '_')"
+base="raw-sql-vault-${safe_database_name}-${timestamp}"
 final_file="$BACKUP_DIR/$base.dump"
 manifest="$BACKUP_DIR/$base.manifest"
 tmp_file="$(mktemp "$BACKUP_DIR/.backup.XXXXXX")"
