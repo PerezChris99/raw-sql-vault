@@ -2,7 +2,7 @@
 
 ## What the connector does
 
-The Node.js and Python examples provide a starting point for pooled PostgreSQL access. They parameterize query values, apply bounded statement timeouts, and can attach trusted request context to a transaction. They are not a complete authorization system, distributed rate limiter, secrets manager, or production SRE service.
+The Node.js and Python examples provide a starting point for pooled PostgreSQL access. They parameterize query values, apply bounded statement timeouts, and can attach trusted request context to a transaction. They are not a complete authorization system, distributed rate limiter, audit-log sink, secrets manager, or production SRE service. The legacy audit configuration flag is retained only for compatibility; it does not write audit records.
 
 ## The key safety rules
 
@@ -11,6 +11,7 @@ The Node.js and Python examples provide a starting point for pooled PostgreSQL a
 - **Do not blindly retry arbitrary statements.** If the network drops after a write, the client may not know whether PostgreSQL committed it. Retrying can double-book an appointment or repeat a payment. These connectors execute each statement once; applications needing retries must classify retryable errors and retry the entire transaction only when all side effects are idempotent.
 - **Use verified TLS in production.** Node.js production mode requires DB_SSL=true and certificate verification. Python defaults to sslmode=verify-full; production accepts only verify-ca or verify-full. Use an explicit local-development setting only for a local disposable database.
 - **Keep credentials out of source.** The Python connector passes structured connection parameters to libpq, so quotes and spaces in a password remain values instead of breaking an interpolated DSN.
+- **Do not assume audit records exist.** The legacy enable-audit flag is not an audit implementation. Applications requiring audit evidence must add a protected append-only audit design with access controls, retention, and tamper monitoring.
 - **Bound resource usage.** Pool bounds, connection timeouts, statement timeouts, and in-memory rate-limit state reduce common failure modes. In-memory limits are per process and are not a distributed security control.
 
 ## Example: a payment or booking request
