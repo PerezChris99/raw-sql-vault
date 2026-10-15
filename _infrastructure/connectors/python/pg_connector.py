@@ -18,6 +18,7 @@ import time
 import uuid
 import logging
 import ssl as ssl_module
+import threading
 from typing import Any, Dict, List, Optional, Tuple, Union
 from contextlib import contextmanager, asynccontextmanager
 from dataclasses import dataclass, field
@@ -82,32 +83,39 @@ class RateLimiter:
         self.window_seconds = window_seconds
         self.requests: Dict[str, List[float]] = defaultdict(list)
         self._checks = 0
+        self._lock = threading.Lock()
     
     def check(self, identifier: str) -> Tuple[bool, int]:
-        """Check if request is allowed. Returns (allowed, remaining)."""
-        now = time.time()
-        window_start = now - self.window_seconds
-        
-        # Bound memory under high-cardinality identifiers. An unbounded map can
-        # turn a simple rate limiter into a memory-exhaustion vector.
-        self._checks += 1
-        if self._checks % 100 == 0:
-            for key in list(self.requests):
-                if not any(t > window_start for t in self.requests[key]):
-                    self.requests.pop(key, None)
-        if identifier not in self.requests and len(self.requests) >= 10000:
-            # Evict one oldest-insertion entry before adding a new identity.
-            # This bounds memory but is not a distributed rate-limit policy.
-            self.requests.pop(next(iter(self.requests)), None)
-        self.requests[identifier] = [
-            t for t in self.requests.get(identifier, []) if t > window_start
-        ]
-        
-        if len(self.requests[identifier]) >= self.limit:
-            return False, 0
-        
-        self.requests[identifier].append(now)
-        return True, self.limit - len(self.requests[identifier])
+        """Check a sliding-window limit safely across threads in this process.
+
+        Plain language: concurrent requests cannot all pass the same last slot
+        because the counter update is protected by a lock. This still is not a
+        distributed limit across multiple worker processes or hosts.
+        """
+        with self._lock:
+            now = time.time()
+            window_start = now - self.window_seconds
+
+            # Bound memory under high-cardinality identifiers. An unbounded map can
+            # turn a simple rate limiter into a memory-exhaustion vector.
+            self._checks += 1
+            if self._checks % 100 == 0:
+                for key in list(self.requests):
+                    if not any(t > window_start for t in self.requests[key]):
+                        self.requests.pop(key, None)
+            if identifier not in self.requests and len(self.requests) >= 10000:
+                # Evict one oldest-insertion entry before adding a new identity.
+                # This bounds memory but is not a distributed rate-limit policy.
+                self.requests.pop(next(iter(self.requests)), None)
+            self.requests[identifier] = [
+                t for t in self.requests.get(identifier, []) if t > window_start
+            ]
+
+            if len(self.requests[identifier]) >= self.limit:
+                return False, 0
+
+            self.requests[identifier].append(now)
+            return True, self.limit - len(self.requests[identifier])
 
 
 # ============================================================================
@@ -145,6 +153,7 @@ class PostgresConnector:
     def __init__(self, config: ConnectorConfig):
         self.config = config
         self._pool: Optional[pool.ThreadedConnectionPool] = None
+        self._pool_lock = threading.Lock()
         self._rate_limiter = RateLimiter(config.rate_limit_per_minute)
     
     @classmethod
@@ -174,35 +183,38 @@ class PostgresConnector:
     # ========================================================================
     
     def _get_pool(self) -> pool.ThreadedConnectionPool:
-        """Create a pool with structured libpq parameters rather than string interpolation.
+        """Create one pool safely even when several threads start together.
 
-        Plain language: passwords containing spaces or quotes remain values, not
-        connection-string syntax. Verified TLS protects credentials and data in transit.
+        Plain language: two first requests arriving at once must not each create
+        a separate pool and silently exceed the intended connection budget.
+        Technical: a lock and second check serialize lazy initialization.
         """
         if self._pool is None:
-            p = self.config.pool
-            if p.min_connections < 1 or p.max_connections < p.min_connections:
-                raise ValueError("Pool bounds must satisfy 1 <= min_connections <= max_connections.")
-            if p.connect_timeout < 1:
-                raise ValueError("connect_timeout must be positive.")
-            allowed_ssl_modes = {"disable", "allow", "prefer", "require", "verify-ca", "verify-full"}
-            if p.ssl_mode not in allowed_ssl_modes:
-                raise ValueError(f"Unsupported ssl_mode: {p.ssl_mode}")
-            environment = os.getenv("APP_ENV", os.getenv("ENVIRONMENT", "")).lower()
-            if environment == "production" and p.ssl_mode not in {"verify-ca", "verify-full"}:
-                raise ValueError("Production requires DB_SSL_MODE=verify-ca or verify-full.")
-            self._pool = pool.ThreadedConnectionPool(
-                minconn=p.min_connections,
-                maxconn=p.max_connections,
-                host=p.host,
-                port=p.port,
-                dbname=p.database,
-                user=p.user,
-                password=p.password,
-                sslmode=p.ssl_mode,
-                connect_timeout=p.connect_timeout,
-                application_name="raw_sql_vault_app",
-            )
+            with self._pool_lock:
+                if self._pool is None:
+                    p = self.config.pool
+                    if p.min_connections < 1 or p.max_connections < p.min_connections:
+                        raise ValueError("Pool bounds must satisfy 1 <= min_connections <= max_connections.")
+                    if p.connect_timeout < 1:
+                        raise ValueError("connect_timeout must be positive.")
+                    allowed_ssl_modes = {"disable", "allow", "prefer", "require", "verify-ca", "verify-full"}
+                    if p.ssl_mode not in allowed_ssl_modes:
+                        raise ValueError(f"Unsupported ssl_mode: {p.ssl_mode}")
+                    environment = os.getenv("APP_ENV", os.getenv("ENVIRONMENT", "")).lower()
+                    if environment == "production" and p.ssl_mode not in {"verify-ca", "verify-full"}:
+                        raise ValueError("Production requires DB_SSL_MODE=verify-ca or verify-full.")
+                    self._pool = pool.ThreadedConnectionPool(
+                        minconn=p.min_connections,
+                        maxconn=p.max_connections,
+                        host=p.host,
+                        port=p.port,
+                        dbname=p.database,
+                        user=p.user,
+                        password=p.password,
+                        sslmode=p.ssl_mode,
+                        connect_timeout=p.connect_timeout,
+                        application_name="raw_sql_vault_app",
+                    )
         return self._pool
 
     @contextmanager
@@ -276,7 +288,7 @@ class PostgresConnector:
         Args:
             sql_text: SQL with %s placeholders
             params: List of parameter values
-            context: Dict with tenant_id, user_id, roles for RLS
+            context: Trusted backend context with tenant_id, user_id, and request_id
             fetch: 'all' for fetchall, 'one' for fetchone, 'none' for no fetch
         
         Returns:
@@ -403,9 +415,10 @@ class PostgresConnector:
     
     def close(self):
         """Close all connections in the pool."""
-        if self._pool:
-            self._pool.closeall()
-            self._pool = None
+        with self._pool_lock:
+            if self._pool:
+                self._pool.closeall()
+                self._pool = None
     
     def __enter__(self):
         return self
