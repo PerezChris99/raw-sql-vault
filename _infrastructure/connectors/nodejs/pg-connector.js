@@ -47,7 +47,7 @@ const DEFAULT_CONFIG = {
     retryAttempts: 3,
     retryDelayMs: 1000,
     statementTimeout: 30000,
-    enableAudit: true,
+    enableAudit: false,
     rateLimitPerMinute: 100,
 };
 
