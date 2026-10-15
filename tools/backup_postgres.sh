@@ -21,6 +21,10 @@ safe_database_name="$(printf '%s' "$database_name" | tr -c 'A-Za-z0-9._-' '_')"
 base="raw-sql-vault-${safe_database_name}-${timestamp}"
 final_file="$BACKUP_DIR/$base.dump"
 manifest="$BACKUP_DIR/$base.manifest"
+if [[ -e "$final_file" || -e "$manifest" ]]; then
+  echo "ERROR: Backup output already exists; refusing to overwrite it." >&2
+  exit 6
+fi
 tmp_file="$(mktemp "$BACKUP_DIR/.backup.XXXXXX")"
 tmp_manifest="$(mktemp "$BACKUP_DIR/.manifest.XXXXXX")"
 cleanup() { rm -f "$tmp_file" "$tmp_manifest"; }

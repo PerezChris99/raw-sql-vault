@@ -16,7 +16,7 @@ export BACKUP_DIR='/secure/off-host-staging/raw-sql-vault'
 bash tools/backup_postgres.sh
 ```
 
-The script creates a compressed custom-format dump, SHA-256 checksum in a non-secret manifest, and restrictive local permissions. It checks that the archive can be listed before publishing output files. It never writes the connection URL to the manifest or console. Transfer artifacts to separately controlled, encrypted, preferably immutable/off-site storage according to deployment policy. The local output directory alone is not a disaster-recovery strategy.
+The script creates a compressed custom-format dump, SHA-256 checksum in a non-secret manifest, and restrictive local permissions. It checks that the archive can be listed before publishing output files and refuses to overwrite an existing timestamped artifact. It never writes the connection URL to the manifest or console. The checksum detects corruption only when the manifest itself is trusted; store the manifest separately or sign it when tamper evidence is required. Transfer artifacts to separately controlled, encrypted, preferably immutable/off-site storage according to deployment policy. The local output directory alone is not a disaster-recovery strategy.
 
 Do not put production passwords in shell history; use an approved secret manager or a restrictive .pgpass file. The URL above is only a placeholder.
 
