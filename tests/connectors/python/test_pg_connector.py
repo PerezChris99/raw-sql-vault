@@ -130,6 +130,7 @@ def load_connector():
     spec = importlib.util.spec_from_file_location("raw_sql_vault_pg_connector_under_test", SOURCE)
     module = importlib.util.module_from_spec(spec)
     assert spec and spec.loader
+    sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
 
