@@ -103,6 +103,8 @@ def load_connector():
     # Inject a small fake driver before importing the module. This keeps tests
     # runnable without installing psycopg2 or connecting to a database.
     psycopg2 = ModuleType("psycopg2")
+    # Mark the fake parent as a package so explicit submodule imports work.
+    psycopg2.__path__ = []
     pool_module = ModuleType("psycopg2.pool")
     pool_module.ThreadedConnectionPool = FakeThreadedConnectionPool
     extras_module = ModuleType("psycopg2.extras")
