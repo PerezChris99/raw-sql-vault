@@ -52,6 +52,12 @@ The shared RLS helpers read tenant, user, and role claims from PostgreSQL custom
 
 Tracked in [issue #93](https://github.com/PerezChris99/raw-sql-vault/issues/93). This is a static finding; no runtime exploit test was performed.
 
+### 8. RBAC bootstrap reruns can have destructive or non-idempotent effects
+
+The shared role bootstrap previously included a cleanup block that reassigned ownership and dropped privileges for app_user, and several group-role declarations were not idempotent. Re-running a setup script should not silently remove ownership/grants or fail because a group role already exists. The bootstrap has now been adjusted to create missing group roles without the destructive cleanup block. Existing databases that ran the old script still need an owner-reviewed permission/credential review; source changes do not reverse past database effects.
+
+The login roles no longer receive a known placeholder password when newly created. If an older version was executed, rotate or revoke the previously known credential using a planned DBA operation; do not assume removing the literal from the file rotated existing secrets.
+
 ## Required follow-up validation
 
 - Add focused Node.js and Python connector tests for parameter binding, pooled-context reset, transactions, retries, TLS, credentials with special characters, rate-limit memory, and shutdown.

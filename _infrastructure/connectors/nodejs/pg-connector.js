@@ -4,7 +4,7 @@
  * 
  * Features:
  * - Connection pooling with PgBouncer support
- * - Automatic retry with exponential backoff
+ * - Explicit transactions with transaction-local context
  * - Query parameterization (injection-safe)
  * - Rate limiting integration
  * - Audit logging
@@ -35,8 +35,8 @@ const crypto = require('crypto');
 /**
  * @typedef {Object} ConnectorConfig
  * @property {PoolConfig} pool
- * @property {number} retryAttempts
- * @property {number} retryDelayMs
+ * @property {number} retryAttempts @deprecated No arbitrary-statement retries are performed.
+ * @property {number} retryDelayMs @deprecated No arbitrary-statement retries are performed.
  * @property {number} statementTimeout
  * @property {string} [defaultTenant]
  * @property {boolean} enableAudit
@@ -106,95 +106,115 @@ class PostgresConnector {
     // ========================================================================
 
     /**
-     * Execute a parameterized query (SAFE from SQL injection)
-     * @param {string} text - SQL query with $1, $2, etc. placeholders
-     * @param {any[]} [params=[]] - Array of parameter values
-     * @param {{tenantId?: string, userId?: string, requestId?: string}} [context] - Optional context for auditing
-     * @returns {Promise<import('pg').QueryResult>}
+     * Execute one SQL statement safely.
+     *
+     * Plain language: values such as tenant IDs are scoped to this transaction,
+     * not left on a pooled connection for the next person who borrows it.
+     * If this context is missing or forged by an untrusted caller, RLS cannot
+     * infer the caller's real identity. Only trusted application code may set it.
+     *
+     * Technical: contextual queries run inside BEGIN/COMMIT and use parameterized
+     * set_config(..., true), whose third argument makes settings transaction-local.
+     * Do not pass transaction-control SQL or multi-statement scripts to this method.
      */
     async query(text, params = [], context = null) {
-        // Rate limiting check
-        const identifier = (context && context.userId) ? context.userId : 'anonymous';
-        this._checkRateLimit(identifier);
-
-        const client = await this.getClient();
-        
-        try {
-            // Set session context for RLS
-            if (context && context.tenantId) {
-                await client.query('SET app.current_tenant_id = $1', [context.tenantId]);
-            }
-            if (context && context.userId) {
-                await client.query('SET app.current_user_id = $1', [context.userId]);
-            }
-            if (context && context.requestId) {
-                await client.query('SET app.request_id = $1', [context.requestId]);
-            }
-
-            // Execute with retry
-            return await this._executeWithRetry(client, text, params);
-        } finally {
-            client.release();
+        if (typeof text !== 'string' || !text.trim()) {
+            throw new TypeError('SQL text must be a non-empty string.');
         }
-    }
-
-    /**
-     * Execute a transaction with automatic rollback on error
-     * @param {(client: import('pg').PoolClient) => Promise<any>} callback
-     * @param {{tenantId?: string, userId?: string}} [context]
-     * @returns {Promise<any>}
-     */
-    async transaction(callback, context = null) {
+        const identifier = context?.userId || 'anonymous';
+        this._checkRateLimit(identifier);
         const client = await this.getClient();
-        
+        let transactionStarted = false;
+        let discardClient = false;
+
         try {
-            await client.query('BEGIN');
-            
-            // Set context
-            if (context && context.tenantId) {
-                await client.query('SET app.current_tenant_id = $1', [context.tenantId]);
-            }
-            if (context && context.userId) {
-                await client.query('SET app.current_user_id = $1', [context.userId]);
+            if (context && Object.values(context).some(value => value !== undefined && value !== null)) {
+                await client.query('BEGIN');
+                transactionStarted = true;
+                await this._applyContext(client, context);
             }
 
-            const result = await callback(client);
-            
-            await client.query('COMMIT');
+            const result = await client.query(text, params);
+            if (transactionStarted) {
+                await client.query('COMMIT');
+                transactionStarted = false;
+            }
             return result;
         } catch (error) {
-            await client.query('ROLLBACK');
+            if (transactionStarted) {
+                try {
+                    await client.query('ROLLBACK');
+                    transactionStarted = false;
+                } catch (rollbackError) {
+                    // A connection that cannot roll back must not return to the pool.
+                    discardClient = true;
+                    error.rollbackError = rollbackError;
+                }
+            }
             throw error;
         } finally {
-            client.release();
+            client.release(discardClient ? new Error('Discarding client after failed rollback') : undefined);
         }
     }
 
-    // ========================================================================
-    // RETRY LOGIC
-    // ========================================================================
+    /**
+     * Apply trusted request context inside an active transaction.
+     *
+     * Plain language: these values describe the request being handled. Using
+     * transaction-local settings prevents yesterday's tenant from leaking into
+     * today's request when a pooled connection is reused.
+     *
+     * Technical: custom GUC values are not an authentication mechanism; never
+     * trust caller-controlled roles or tenant IDs when the caller can issue
+     * arbitrary SQL directly against this shared database role.
+     */
+    async _applyContext(client, context) {
+        const entries = [
+            ['app.current_tenant_id', context.tenantId],
+            ['app.current_user_id', context.userId],
+            ['app.request_id', context.requestId],
+        ];
+        for (const [setting, value] of entries) {
+            if (value !== undefined && value !== null) {
+                await client.query('SELECT set_config($1, $2, true)', [setting, String(value)]);
+            }
+        }
+    }
 
     /**
-     * @param {import('pg').PoolClient} client
-     * @param {string} text
-     * @param {any[]} params
-     * @param {number} [attempt=1]
-     * @returns {Promise<import('pg').QueryResult>}
+     * Run a transaction and always attempt rollback on failure.
+     * The callback is deliberately not automatically retried: it may have
+     * side effects outside PostgreSQL, and retrying a write after a lost
+     * connection can duplicate work. The caller must implement an explicit,
+     * idempotent whole-transaction retry policy if the domain permits it.
      */
-    async _executeWithRetry(client, text, params, attempt = 1) {
+    async transaction(callback, context = null) {
+        if (typeof callback !== 'function') throw new TypeError('Transaction callback is required.');
+        const client = await this.getClient();
+        let transactionStarted = false;
+        let discardClient = false;
+
         try {
-            return await client.query(text, params);
+            await client.query('BEGIN');
+            transactionStarted = true;
+            if (context) await this._applyContext(client, context);
+            const result = await callback(client);
+            await client.query('COMMIT');
+            transactionStarted = false;
+            return result;
         } catch (error) {
-            // Retryable errors
-            const retryableCodes = ['40001', '40P01', '57P01', '08006', '08001'];
-            
-            if (attempt < this.config.retryAttempts && retryableCodes.includes(error.code)) {
-                const delay = this.config.retryDelayMs * Math.pow(2, attempt - 1);
-                await this._sleep(delay);
-                return this._executeWithRetry(client, text, params, attempt + 1);
+            if (transactionStarted) {
+                try {
+                    await client.query('ROLLBACK');
+                    transactionStarted = false;
+                } catch (rollbackError) {
+                    discardClient = true;
+                    error.rollbackError = rollbackError;
+                }
             }
-            
             throw error;
+        } finally {
+            client.release(discardClient ? new Error('Discarding client after failed rollback') : undefined);
         }
     }
 
@@ -209,12 +229,24 @@ class PostgresConnector {
         const now = new Date();
         const entry = this._requestCounts.get(identifier);
 
+        // Bound per-process memory: remove expired identities periodically.
+        this._rateLimitChecks = (this._rateLimitChecks || 0) + 1;
+        if (this._rateLimitChecks % 100 === 0) {
+            for (const [key, value] of this._requestCounts) {
+                if (value.resetAt <= now) this._requestCounts.delete(key);
+            }
+        }
         if (entry && entry.resetAt > now) {
             if (entry.count >= this.config.rateLimitPerMinute) {
                 throw new Error(`Rate limit exceeded. Try again after ${entry.resetAt.toISOString()}`);
             }
             entry.count++;
         } else {
+            // The map is process-local and is not a distributed security control.
+            if (this._requestCounts.size >= 10000) {
+                const oldest = this._requestCounts.keys().next().value;
+                if (oldest !== undefined) this._requestCounts.delete(oldest);
+            }
             this._requestCounts.set(identifier, {
                 count: 1,
                 resetAt: new Date(now.getTime() + 60000),
@@ -264,10 +296,6 @@ class PostgresConnector {
      * @param {number} ms
      * @returns {Promise<void>}
      */
-    _sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
     /**
      * Generate a request ID for tracing
      * @returns {string}
@@ -309,6 +337,18 @@ function createConnector(projectName, overrides = {}) {
         rateLimitPerMinute: 100,
     };
 
+    // Plain language: production connections must encrypt traffic and verify the
+    // database certificate. Local development may explicitly opt out; production may not.
+    if (process.env.NODE_ENV === 'production' &&
+        !(config.pool.ssl && typeof config.pool.ssl === 'object' && config.pool.ssl.rejectUnauthorized === true)) {
+        throw new Error('Production requires TLS with certificate verification (DB_SSL=true and no insecure override).');
+    }
+    if (!Number.isInteger(config.pool.max) || config.pool.max < 1 || config.pool.max > 200) {
+        throw new Error('DB_POOL_MAX must be an integer between 1 and 200.');
+    }
+    if (!Number.isInteger(config.statementTimeout) || config.statementTimeout < 1) {
+        throw new Error('statementTimeout must be a positive integer in milliseconds.');
+    }
     return new PostgresConnector(config);
 }
 
@@ -321,13 +361,15 @@ function createConnector(projectName, overrides = {}) {
 const connector = createConnector('refugee_aid_allocator');
 
 // Simple query (parameterized - safe from injection)
+// Context is only a trusted backend-provided RLS hint, not end-user authentication.
 const refugees = await connector.query(
     'SELECT * FROM refugees WHERE camp_id = $1 AND status = $2',
     [campId, 'active'],
     { tenantId: 'org-123', userId: 'user-456' }
 );
 
-// Transaction
+// Transaction: the callback is not automatically retried because it may have
+// external side effects. Add whole-transaction retries only with domain idempotency.
 const result = await connector.transaction(async (client) => {
     await client.query('UPDATE allocations SET status = $1 WHERE id = $2', ['approved', allocationId]);
     await client.query('INSERT INTO allocation_history (allocation_id, action) VALUES ($1, $2)', [allocationId, 'approved']);

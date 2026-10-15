@@ -11,8 +11,13 @@
 -- ============================================================================
 -- For multi-tenant applications where each tenant sees only their data
 
--- Session variable to hold current tenant (set by application)
--- SET app.current_tenant_id = '123';
+-- REQUEST CONTEXT TRUST BOUNDARY
+-- Plain language: trusted application code supplies the tenant for the current request;
+-- the connector clears it at transaction end so a pooled connection cannot leak it.
+-- If an untrusted person can run arbitrary SQL as the shared application role, they can
+-- choose a custom setting themselves. Do not expose this database role directly to users.
+-- Technical: custom GUCs are caller-settable, so these helpers are defense in depth,
+-- not an identity provider or protection against arbitrary SQL under app_service.
 
 CREATE OR REPLACE FUNCTION security.current_tenant_id()
 RETURNS TEXT AS $$
@@ -22,7 +27,7 @@ BEGIN
         ''
     );
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE;
 
 -- ============================================================================
 -- USER CONTEXT PATTERN  
@@ -37,12 +42,13 @@ BEGIN
         ''
     );
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE;
 
 -- ============================================================================
 -- ROLE-BASED ACCESS PATTERN
 -- ============================================================================
 
+-- Retained for display/diagnostics only; never use this value to grant privileges.
 CREATE OR REPLACE FUNCTION security.current_app_roles()
 RETURNS TEXT[] AS $$
 BEGIN
@@ -51,14 +57,24 @@ BEGIN
         ','
     );
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION security.has_app_role(p_role TEXT)
 RETURNS BOOLEAN AS $$
 BEGIN
-    RETURN p_role = ANY(security.current_app_roles());
+    -- Privileged decisions use database-authenticated membership only. A caller can
+    -- set app.current_roles to any string, so it must never grant administrator access.
+    RETURN EXISTS (
+        SELECT 1
+        FROM pg_catalog.pg_auth_members AS am
+        JOIN pg_catalog.pg_roles AS granted_role ON granted_role.oid = am.roleid
+        JOIN pg_catalog.pg_roles AS member_role ON member_role.oid = am.member
+        WHERE granted_role.rolname = p_role
+          AND member_role.rolname = session_user
+    ) OR session_user = p_role;
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = pg_catalog;
+
 
 -- ============================================================================
 -- RLS HELPER: Enable RLS on a table with tenant isolation
@@ -87,8 +103,8 @@ BEGIN
     EXECUTE format(
         'CREATE POLICY %I ON %I.%I
          FOR ALL
-         USING (%I::TEXT = security.current_tenant_id() OR security.has_app_role(''admin''))
-         WITH CHECK (%I::TEXT = security.current_tenant_id() OR security.has_app_role(''admin''))',
+         USING (%I::TEXT = security.current_tenant_id())
+         WITH CHECK (%I::TEXT = security.current_tenant_id())',
         v_policy_name, p_schema_name, p_table_name, p_tenant_column, p_tenant_column
     );
     
@@ -110,18 +126,15 @@ CREATE OR REPLACE FUNCTION security.enable_user_rls(
 RETURNS VOID AS $$
 DECLARE
     v_policy_name TEXT;
-    v_admin_clause TEXT;
 BEGIN
     -- Enable RLS
     EXECUTE format('ALTER TABLE %I.%I ENABLE ROW LEVEL SECURITY', p_schema_name, p_table_name);
     EXECUTE format('ALTER TABLE %I.%I FORCE ROW LEVEL SECURITY', p_schema_name, p_table_name);
     
-    -- Build admin bypass clause
-    IF p_allow_admin THEN
-        v_admin_clause := ' OR security.has_app_role(''admin'')';
-    ELSE
-        v_admin_clause := '';
-    END IF;
+    -- p_allow_admin is retained for call-site compatibility only. It is deliberately
+    -- not used: generic RLS helpers must not create implicit administrator bypasses.
+    -- If an exception is required, add a separate policy for a database-authenticated
+    -- role after an explicit review of the data and operational threat model.
     
     -- Drop existing policy
     v_policy_name := p_table_name || '_user_isolation';
@@ -131,11 +144,11 @@ BEGIN
     EXECUTE format(
         'CREATE POLICY %I ON %I.%I
          FOR ALL
-         USING (%I::TEXT = security.current_app_user_id()%s)
-         WITH CHECK (%I::TEXT = security.current_app_user_id()%s)',
-        v_policy_name, p_schema_name, p_table_name, 
-        p_user_column, v_admin_clause,
-        p_user_column, v_admin_clause
+         USING (%I::TEXT = security.current_app_user_id())
+         WITH CHECK (%I::TEXT = security.current_app_user_id())',
+        v_policy_name, p_schema_name, p_table_name,
+        p_user_column,
+        p_user_column
     );
     
     RAISE NOTICE 'RLS enabled on %.% with user isolation on column %', 
@@ -184,8 +197,8 @@ CREATE OR REPLACE FUNCTION security.mask_pii(
 )
 RETURNS TEXT AS $$
 BEGIN
-    -- Admins see real data
-    IF security.has_app_role('admin') OR security.has_app_role('data_admin') THEN
+    -- Privileged visibility is based on actual database-role membership, never caller-set text.
+    IF security.has_app_role('app_admin') OR security.has_app_role('security_admin') OR security.has_app_role('data_admin') THEN
         RETURN p_value;
     END IF;
     
@@ -216,7 +229,7 @@ BEGIN
             RETURN '***MASKED***';
     END CASE;
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE;
 
 -- ============================================================================
 -- DATA CLASSIFICATION LABELS
@@ -300,7 +313,7 @@ SELECT security.enable_tenant_rls('public', 'orders', 'tenant_id');
 -- Usage in application:
 -- SET app.current_tenant_id = '42';
 -- SET app.current_user_id = '123';
--- SET app.current_roles = 'user,manager';
+-- Do not use app.current_roles for authorization: a caller can set this custom GUC.
 -- SELECT * FROM orders;  -- Only sees tenant 42's orders
 
 -- Classify sensitive columns

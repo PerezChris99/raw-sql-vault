@@ -4,7 +4,7 @@ Python 3.9+
 
 Features:
 - Connection pooling with PgBouncer support
-- Automatic retry with exponential backoff
+- Explicit transaction boundaries and transaction-local request context
 - Query parameterization (injection-safe)
 - Rate limiting integration
 - Context managers for transactions
@@ -17,10 +17,10 @@ import os
 import time
 import uuid
 import logging
+import ssl as ssl_module
 from typing import Any, Dict, List, Optional, Tuple, Union
 from contextlib import contextmanager, asynccontextmanager
 from dataclasses import dataclass, field
-from functools import wraps
 from collections import defaultdict
 from datetime import datetime, timedelta
 
@@ -52,7 +52,9 @@ class PoolConfig:
     min_connections: int = 2
     max_connections: int = 20
     connect_timeout: int = 10
-    ssl_mode: str = "prefer"  # disable, prefer, require
+    # Secure by default: verify the server certificate and hostname.
+    # Local development must explicitly choose disable/require only when appropriate.
+    ssl_mode: str = "verify-full"
 
 
 @dataclass
@@ -77,15 +79,26 @@ class RateLimiter:
         self.limit = limit
         self.window_seconds = window_seconds
         self.requests: Dict[str, List[float]] = defaultdict(list)
+        self._checks = 0
     
     def check(self, identifier: str) -> Tuple[bool, int]:
         """Check if request is allowed. Returns (allowed, remaining)."""
         now = time.time()
         window_start = now - self.window_seconds
         
-        # Clean old requests
+        # Bound memory under high-cardinality identifiers. An unbounded map can
+        # turn a simple rate limiter into a memory-exhaustion vector.
+        self._checks += 1
+        if self._checks % 100 == 0:
+            for key in list(self.requests):
+                if not any(t > window_start for t in self.requests[key]):
+                    self.requests.pop(key, None)
+        if identifier not in self.requests and len(self.requests) >= 10000:
+            # Evict one oldest-insertion entry before adding a new identity.
+            # This bounds memory but is not a distributed rate-limit policy.
+            self.requests.pop(next(iter(self.requests)), None)
         self.requests[identifier] = [
-            t for t in self.requests[identifier] if t > window_start
+            t for t in self.requests.get(identifier, []) if t > window_start
         ]
         
         if len(self.requests[identifier]) >= self.limit:
@@ -140,7 +153,7 @@ class PostgresConnector:
             password=os.getenv('DB_PASSWORD', ''),
             min_connections=int(os.getenv('DB_POOL_MIN', '2')),
             max_connections=int(os.getenv('DB_POOL_MAX', '20')),
-            ssl_mode=os.getenv('DB_SSL_MODE', 'prefer'),
+            ssl_mode=os.getenv('DB_SSL_MODE', 'verify-full'),
         )
         
         # Apply overrides
@@ -156,45 +169,88 @@ class PostgresConnector:
     # ========================================================================
     
     def _get_pool(self) -> pool.ThreadedConnectionPool:
-        """Get or create connection pool (lazy initialization)."""
+        """Create a pool with structured libpq parameters rather than string interpolation.
+
+        Plain language: passwords containing spaces or quotes remain values, not
+        connection-string syntax. Verified TLS protects credentials and data in transit.
+        """
         if self._pool is None:
             p = self.config.pool
-            dsn = f"host={p.host} port={p.port} dbname={p.database} user={p.user} password={p.password} sslmode={p.ssl_mode} connect_timeout={p.connect_timeout}"
-            
+            if p.min_connections < 1 or p.max_connections < p.min_connections:
+                raise ValueError("Pool bounds must satisfy 1 <= min_connections <= max_connections.")
+            if p.connect_timeout < 1:
+                raise ValueError("connect_timeout must be positive.")
+            allowed_ssl_modes = {"disable", "allow", "prefer", "require", "verify-ca", "verify-full"}
+            if p.ssl_mode not in allowed_ssl_modes:
+                raise ValueError(f"Unsupported ssl_mode: {p.ssl_mode}")
+            environment = os.getenv("APP_ENV", os.getenv("ENVIRONMENT", "")).lower()
+            if environment == "production" and p.ssl_mode not in {"verify-ca", "verify-full"}:
+                raise ValueError("Production requires DB_SSL_MODE=verify-ca or verify-full.")
             self._pool = pool.ThreadedConnectionPool(
                 minconn=p.min_connections,
                 maxconn=p.max_connections,
-                dsn=dsn,
-                application_name='raw_sql_vault_app',
+                host=p.host,
+                port=p.port,
+                dbname=p.database,
+                user=p.user,
+                password=p.password,
+                sslmode=p.ssl_mode,
+                connect_timeout=p.connect_timeout,
+                application_name="raw_sql_vault_app",
             )
         return self._pool
-    
+
     @contextmanager
-    def _get_connection(self, context: Optional[Dict[str, str]] = None):
-        """Get connection from pool with context management."""
+    def _get_connection(self, context: Optional[Dict[str, Any]] = None):
+        """Borrow a connection and scope all settings to one transaction.
+
+        Plain language: a connection is shared infrastructure. We set request
+        context only while this request's transaction is open, commit on success,
+        roll back on failure, and always return a clean connection to the pool.
+
+        Technical: set_config(..., true) is transaction-local. The custom settings
+        are trusted only when supplied by a trusted application backend; they do
+        not authenticate direct SQL callers and must not carry client-chosen roles.
+        """
         conn = self._get_pool().getconn()
+        discarded = False
         try:
-            # Set statement timeout
             with conn.cursor() as cur:
-                cur.execute(f"SET statement_timeout = {self.config.statement_timeout_ms}")
-                
-                # Set RLS context
+                cur.execute("SELECT set_config('statement_timeout', %s, true)", [f"{self.config.statement_timeout_ms}ms"])
                 if context:
-                    if context.get('tenant_id'):
-                        cur.execute("SET app.current_tenant_id = %s", [context['tenant_id']])
-                    if context.get('user_id'):
-                        cur.execute("SET app.current_user_id = %s", [context['user_id']])
-                    if context.get('request_id'):
-                        cur.execute("SET app.request_id = %s", [context['request_id']])
-                    if context.get('roles'):
-                        cur.execute("SET app.current_roles = %s", [','.join(context['roles'])])
-                
-                conn.commit()
-            
+                    context_values = (
+                        ("app.current_tenant_id", context.get("tenant_id")),
+                        ("app.current_user_id", context.get("user_id")),
+                        ("app.request_id", context.get("request_id")),
+                    )
+                    for setting, value in context_values:
+                        if value is not None:
+                            cur.execute("SELECT set_config(%s, %s, true)", [setting, str(value)])
+                # Do not accept context['roles']; authorization must come from
+                # database-authenticated roles, not caller-controlled session text.
             yield conn
+            conn.commit()
+        except Exception:
+            try:
+                conn.rollback()
+            except Exception:
+                logger.exception("Rollback failed while returning a PostgreSQL connection.")
+                try:
+                    discarded = True
+                    self._get_pool().putconn(conn, close=True)
+                except Exception:
+                    logger.exception("Failed to discard a connection after rollback failure.")
+                raise
+            raise
         finally:
-            self._get_pool().putconn(conn)
-    
+            # psycopg2's pool resets transaction state on return; commit/rollback
+            # above ensures the connection is not returned with an open transaction.
+            if not discarded and not conn.closed:
+                try:
+                    self._get_pool().putconn(conn)
+                except Exception:
+                    logger.exception("Failed to return PostgreSQL connection to the pool.")
+
     # ========================================================================
     # QUERY EXECUTION
     # ========================================================================
@@ -224,42 +280,35 @@ class PostgresConnector:
         if not allowed:
             raise Exception(f"Rate limit exceeded. Try again later.")
         
-        # Execute with retry
-        return self._execute_with_retry(sql_text, params, context, fetch)
+        # Execute once. Automatic arbitrary-statement retries can duplicate writes.
+        return self._execute_once(sql_text, params, context, fetch)
     
-    def _execute_with_retry(
+    def _execute_once(
         self,
         sql_text: str,
         params: Optional[List[Any]],
-        context: Optional[Dict[str, str]],
+        context: Optional[Dict[str, Any]],
         fetch: str,
-        attempt: int = 1
     ) -> Union[List[Dict], Dict, None]:
-        """Execute query with automatic retry on transient errors."""
-        try:
-            with self._get_connection(context) as conn:
-                with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
-                    cur.execute(sql_text, params)
-                    
-                    if fetch == 'all':
-                        result = cur.fetchall()
-                        return [dict(row) for row in result]
-                    elif fetch == 'one':
-                        row = cur.fetchone()
-                        return dict(row) if row else None
-                    else:
-                        conn.commit()
-                        return None
-                        
-        except psycopg2.OperationalError as e:
-            # Retry on transient errors
-            if attempt < self.config.retry_attempts:
-                delay = self.config.retry_delay_seconds * (2 ** (attempt - 1))
-                logger.warning(f"Query failed (attempt {attempt}), retrying in {delay}s: {e}")
-                time.sleep(delay)
-                return self._execute_with_retry(sql_text, params, context, fetch, attempt + 1)
-            raise
-    
+        """Execute once; never blindly replay arbitrary SQL after an error.
+
+        Plain language: if a connection drops after a write, we may not know
+        whether the server committed it. Repeating the statement can duplicate
+        a payment, booking, or allocation. Retry only an explicitly idempotent
+        whole transaction after classifying the database error and side effects.
+        """
+        with self._get_connection(context) as conn:
+            with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
+                cur.execute(sql_text, params)
+                if fetch == 'all':
+                    return [dict(row) for row in cur.fetchall()]
+                if fetch == 'one':
+                    row = cur.fetchone()
+                    return dict(row) if row else None
+                if fetch == 'none':
+                    return None
+                raise ValueError("fetch must be 'all', 'one', or 'none'.")
+
     # ========================================================================
     # TRANSACTIONS
     # ========================================================================
@@ -275,13 +324,8 @@ class PostgresConnector:
                 cursor.execute("INSERT ...", params)
         """
         with self._get_connection(context) as conn:
-            try:
-                with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
-                    yield cur
-                conn.commit()
-            except Exception:
-                conn.rollback()
-                raise
+            with conn.cursor(cursor_factory=extras.RealDictCursor) as cur:
+                yield cur
     
     # ========================================================================
     # BULK OPERATIONS
@@ -319,7 +363,6 @@ class PostgresConnector:
                 )
                 
                 extras.execute_values(cur, query.as_string(conn), rows)
-                conn.commit()
                 return cur.rowcount
     
     # ========================================================================
@@ -410,12 +453,29 @@ if ASYNC_AVAILABLE:
         async def _init_pool(self):
             """Initialize the connection pool."""
             p = self.config.pool
+            environment = os.getenv("APP_ENV", os.getenv("ENVIRONMENT", "")).lower()
+            if environment == "production" and p.ssl_mode not in {"verify-ca", "verify-full"}:
+                raise ValueError("Production async connections require verified TLS.")
+            if p.ssl_mode not in {"disable", "allow", "prefer", "require", "verify-ca", "verify-full"}:
+                raise ValueError(f"Unsupported ssl_mode: {p.ssl_mode}")
+            # asyncpg accepts an SSLContext, not libpq's sslmode string. Use Python's
+            # certificate store and hostname verification for verify-full.
+            if p.ssl_mode == "disable":
+                ssl_context = False
+            elif p.ssl_mode == "verify-full":
+                ssl_context = ssl_module.create_default_context()
+            elif p.ssl_mode in {"verify-ca", "require"}:
+                ssl_context = ssl_module.create_default_context()
+                ssl_context.check_hostname = False
+            else:
+                ssl_context = True
             self._pool = await asyncpg.create_pool(
                 host=p.host,
                 port=p.port,
                 database=p.database,
                 user=p.user,
                 password=p.password,
+                ssl=ssl_context,
                 min_size=p.min_connections,
                 max_size=p.max_connections,
                 command_timeout=self.config.statement_timeout_ms / 1000,
@@ -425,31 +485,45 @@ if ASYNC_AVAILABLE:
             self,
             sql_text: str,
             params: Optional[List[Any]] = None,
-            context: Optional[Dict[str, str]] = None,
+            context: Optional[Dict[str, Any]] = None,
         ) -> List[Dict]:
-            """Execute async query with parameters."""
+            """Execute once with transaction-local context and safe cleanup.
+
+            Plain language: request context is removed automatically at transaction
+            end, so the next pooled borrower cannot inherit the previous tenant.
+            """
             if not self._pool:
-                raise Exception("Pool not initialized")
-            
-            async with self._pool.acquire() as conn:
-                # Set context
-                if context:
-                    if context.get('tenant_id'):
-                        await conn.execute("SET app.current_tenant_id = $1", context['tenant_id'])
-                    if context.get('user_id'):
-                        await conn.execute("SET app.current_user_id = $1", context['user_id'])
-                
-                # Execute
-                rows = await conn.fetch(sql_text, *(params or []))
-                return [dict(row) for row in rows]
-        
-        @asynccontextmanager
-        async def transaction(self, context: Optional[Dict[str, str]] = None):
-            """Async transaction context manager."""
+                raise RuntimeError("Pool not initialized")
             async with self._pool.acquire() as conn:
                 async with conn.transaction():
+                    if context:
+                        for setting, value in (
+                            ("app.current_tenant_id", context.get("tenant_id")),
+                            ("app.current_user_id", context.get("user_id")),
+                            ("app.request_id", context.get("request_id")),
+                        ):
+                            if value is not None:
+                                await conn.fetchval("SELECT set_config($1, $2, true)", setting, str(value))
+                    rows = await conn.fetch(sql_text, *(params or []))
+                    return [dict(row) for row in rows]
+
+        @asynccontextmanager
+        async def transaction(self, context: Optional[Dict[str, Any]] = None):
+            """Yield a transaction with trusted, transaction-local request context."""
+            if not self._pool:
+                raise RuntimeError("Pool not initialized")
+            async with self._pool.acquire() as conn:
+                async with conn.transaction():
+                    if context:
+                        for setting, value in (
+                            ("app.current_tenant_id", context.get("tenant_id")),
+                            ("app.current_user_id", context.get("user_id")),
+                            ("app.request_id", context.get("request_id")),
+                        ):
+                            if value is not None:
+                                await conn.fetchval("SELECT set_config($1, $2, true)", setting, str(value))
                     yield conn
-        
+
         async def close(self):
             """Close the pool."""
             if self._pool:
