@@ -2,7 +2,7 @@
 
 **A structured SQL learning, database engineering, and domain-solution portfolio.**  
 **Primary dialect:** PostgreSQL 15+ · **Additional dialects:** MySQL 8 and SQL Server 2019 where explicitly documented  
-**Repository status:** Private pre-release workspace · **Validation status:** package-level SQL execution evidence is required before verification claims
+**Repository status:** Proprietary pre-release workspace · **Validation status:** package-level SQL execution evidence is required before verification claims
 
 Raw SQL Vault combines a progressive SQL curriculum with reusable engineering patterns and small, independently reviewable database solution packages. It prioritises Uganda-relevant public-service and private-sector problems, then extends to worldwide domains and shared analytics infrastructure. The catalogue is a plan and navigation aid—not a claim that every indexed system is implemented, officially endorsed, compliant, or production-ready.
 
@@ -252,14 +252,14 @@ A commit does not automatically advance a package's status. No package should be
 - [Security Remediation Runbook](docs/SECURITY_REMEDIATION_RUNBOOK.md) — credential rotation and safe RBAC recovery.
 - [Secret Scanning](tools/scan_secrets.sh) — current-tree and reachable-history scanning with Gitleaks.
 - [Performance and Scalability](docs/PERFORMANCE_AND_SCALABILITY.md) — measurement-first performance guidance.
-- [Operations, Backup and Restore](docs/OPERATIONS_BACKUP_RESTORE.md) — recovery planning and restore evidence.
+- [Operations, Backup and Restore](docs/OPERATIONS_BACKUP_RESTORE.md) — executable logical backup/restore scripts and required recovery evidence.
 - [Data Governance](docs/DATA_GOVERNANCE.md) — privacy, provenance, retention, and sensitive domains.
 - [Testing and Evidence](docs/TESTING_AND_EVIDENCE.md) — test levels and status claims.
 - [Migration and Deployment](docs/MIGRATION_AND_DEPLOYMENT.md) — safe schema evolution.
 - [Incident Response](docs/INCIDENT_RESPONSE.md) — database incident handling.
 - [Engine Support Matrix](docs/ENGINE_SUPPORT_MATRIX.md) — tested versus unverified dialects.
 - [Release Readiness Checklist](docs/RELEASE_READINESS_CHECKLIST.md) — go/no-go gates.
-- [Licensing and Reuse Decision](docs/LICENSING_AND_REUSE.md) — blocking license decision.
+- [Ownership, Licensing, and Reuse](docs/LICENSING_AND_REUSE.md) — proprietary permission-required terms and provenance checks.
 - [Contribution Guide](CONTRIBUTING.md) — mandatory commit and merge workflow.
 
 ## Limitations and data-use policy
@@ -270,7 +270,7 @@ References to public bodies or regulated industries describe example problem dom
 
 ## Public release status and disclaimer
 
-**Release state: not yet approved for public release.** This repository is being prepared for public consumption, but private visibility remains intentional while release gates are resolved. Documentation is not certification of correctness, security, legal compliance, performance, or operational suitability.
+**Release state: not approved for public release.** Repository visibility is configured separately from the proprietary notice and must match the owner's permission model. Release gates remain unresolved. Documentation is not certification of correctness, security, legal compliance, performance, or operational suitability.
 
 Raw SQL Vault is an educational and engineering reference library. Materials are provided “as is” and “as available,” to the maximum extent permitted by applicable law. No guarantee is made that every script executes, every invariant is enforced across all write paths, every race condition is tested, or any database will never crash, slow down, lose availability, or lose data. Performance depends on engine/version, hardware, storage, network, schema, data distribution, concurrency, configuration, and workload.
 
@@ -282,7 +282,7 @@ Fixtures must be synthetic unless a specific dataset has documented provenance, 
 
 ## Ownership and licensing status
 
-The repository owner has not yet approved a public reuse license. Until a license is selected, added, and reviewed, no open-source or redistribution permission is granted. Public visibility does not itself grant reuse rights. See [Licensing and Reuse Decision](docs/LICENSING_AND_REUSE.md) and [issue #72](https://github.com/PerezChris99/raw-sql-vault/issues/72).
+**Proprietary; all rights reserved.** The root [LICENSE](LICENSE) notice requires prior express written permission for reuse, redistribution, commercial use, or contributions. This is not an open-source license. Public visibility does not itself grant reuse rights. Ownership/provenance checks and review of third-party material remain release gates. See [Ownership, Licensing, and Reuse](docs/LICENSING_AND_REUSE.md) and [issue #72](https://github.com/PerezChris99/raw-sql-vault/issues/72).
 
 ---
 

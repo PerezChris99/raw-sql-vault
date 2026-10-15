@@ -20,6 +20,9 @@ echo "Checking Python connector syntax and mocked regression tests..."
 PYTHONPYCACHEPREFIX="${TMPDIR:-/tmp}/raw-sql-vault-pycache" python3 -m py_compile _infrastructure/connectors/python/pg_connector.py
 python3 -m unittest discover -s tests/connectors/python -p 'test_*.py'
 
+echo "Checking backup/restore shell syntax..."
+bash -n tools/backup_postgres.sh tools/restore_postgres.sh
+
 echo "Checking known-dangerous patterns..."
 if grep -Eq "SET app\\.current_(tenant_id|user_id|roles)[[:space:]]*=[[:space:]]*[$%]" _infrastructure/connectors/nodejs/pg-connector.js _infrastructure/connectors/python/pg_connector.py; then
   fail "Found a parameterized SET statement; use transaction-local set_config."

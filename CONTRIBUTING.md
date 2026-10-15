@@ -30,6 +30,10 @@ A local setting controls commits made by your local Git client. It does **not** 
 
 **Repository transition note:** At the start of this blueprint, an earlier assistant-created branch, `docs/beginner-gap-audit-uganda-projects`, already existed with an open PR. Its commits have been fast-forwarded into `perez` so the work is preserved on the designated work branch. The branch ref/PR still needs final cleanup after the equivalent commits are safely reachable from `main`; do not delete it prematurely. This is a pre-existing deviation from the two-branch policy, not permission to create more branches.
 
+## Permission-required contributions
+
+This is a proprietary repository, not an open-source project. Do not submit or incorporate code, SQL, documentation, datasets, or other contributions unless the repository owner has expressly authorized the contribution in writing and applicable terms have been agreed. Opening an issue, pull request, or fork does not grant permission to reuse repository contents or authorize incorporation of submitted work. The owner must review provenance and third-party rights before accepting any contribution.
+
 ## Per-unit workflow
 
 One unit means one ministry/portfolio, agency, local-government capability, sector or worldwide domain package. Stage only that unit's files, never blindly stage everything.
