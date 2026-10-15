@@ -85,12 +85,19 @@ GRANT audit_viewer TO security_admin; -- Security admins can view audits
 -- ============================================================================
 -- CREATE LOGIN ROLES (actual users/services)
 -- ============================================================================
+-- These roles intentionally have NO embedded/default password. Provision credentials
+-- out-of-band using a secret manager or controlled DBA workflow, then rotate them.
+-- Plain language: source code is public-readable; a known example password becomes
+-- a real vulnerability if someone executes this file unchanged.
+-- Technical: LOGIN roles without a password cannot authenticate with password auth
+-- until provisioned. Configure SCRAM secrets and TLS in the deployment environment.
+-- Do not store secrets in this SQL file or in Git history.
 
 -- Application service account (used by backend)
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_service') THEN
-        CREATE ROLE app_service LOGIN PASSWORD 'CHANGE_IN_PRODUCTION';
+        CREATE ROLE app_service LOGIN;
     END IF;
 END $$;
 GRANT app_write TO app_service;
@@ -102,7 +109,7 @@ COMMENT ON ROLE app_service IS 'Backend application service account';
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_readonly') THEN
-        CREATE ROLE app_readonly LOGIN PASSWORD 'CHANGE_IN_PRODUCTION';
+        CREATE ROLE app_readonly LOGIN;
     END IF;
 END $$;
 GRANT app_read TO app_readonly;
@@ -113,7 +120,7 @@ COMMENT ON ROLE app_readonly IS 'Read-only reporting and analytics';
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'security_user') THEN
-        CREATE ROLE security_user LOGIN PASSWORD 'CHANGE_IN_PRODUCTION';
+        CREATE ROLE security_user LOGIN;
     END IF;
 END $$;
 GRANT security_admin TO security_user;
@@ -123,7 +130,7 @@ COMMENT ON ROLE security_user IS 'Security administration user';
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'backup_service') THEN
-        CREATE ROLE backup_service LOGIN PASSWORD 'CHANGE_IN_PRODUCTION';
+        CREATE ROLE backup_service LOGIN;
     END IF;
 END $$;
 GRANT backup_admin TO backup_service;
@@ -295,6 +302,6 @@ BEGIN
     RAISE NOTICE '  - security_user (security admin)';
     RAISE NOTICE '  - backup_service (backup operations)';
     RAISE NOTICE '';
-    RAISE NOTICE 'IMPORTANT: Change default passwords!';
+    RAISE NOTICE 'IMPORTANT: provision login credentials out-of-band before enabling applications.';
     RAISE NOTICE '==========================================';
 END $$;
