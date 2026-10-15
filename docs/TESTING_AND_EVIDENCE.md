@@ -45,3 +45,10 @@ After applying the shared RBAC and RLS setup to a **disposable** PostgreSQL data
 
 ## Current evidence boundary
 A successful end-to-end SQL suite has not been confirmed in the current review. Static inventory is not a substitute. Track execution in [issue #73](https://github.com/PerezChris99/raw-sql-vault/issues/73).
+
+
+## Backup/restore and tenant-isolation tests
+
+Run shell syntax checks with bash -n tools/backup_postgres.sh tools/restore_postgres.sh. Run a logical backup against a designated non-production database, then restore to a newly created empty database whose name ends in _restore or _recovery, and complete the verification checklist in OPERATIONS_BACKUP_RESTORE.md. This repository change does not itself prove a real backup or restore succeeded.
+
+The authenticated-login RLS regression is included in sql/tests/all_packages.sql. It creates temporary test roles and relies on SET SESSION AUTHORIZATION, so it must be run as a trusted PostgreSQL DBA/superuser on a disposable database. Do not treat mocked or static checks as proof of tenant isolation. The shared app_service login is deliberately not accepted as a tenant identity; tenant-specific login credentials and a trusted backend are required.
