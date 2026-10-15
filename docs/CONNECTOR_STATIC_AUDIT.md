@@ -46,6 +46,12 @@ The Python connector constructs a libpq DSN using string interpolation of host, 
 
 Tracked in [issue #90](https://github.com/PerezChris99/raw-sql-vault/issues/90).
 
+### 7. Caller-controlled RLS context may permit role/tenant spoofing
+
+The shared RLS helpers read tenant, user, and role claims from PostgreSQL custom settings such as app.current_roles. A session able to issue arbitrary SQL may be able to set these custom settings itself. An RLS policy that trusts a caller-settable role string for an admin bypass is not a trustworthy authorization boundary by itself. The accepted design must define whether direct SQL users are in scope and bind authorization to database-authenticated identities or another trusted, constrained mechanism. Test attempted admin-role and tenant impersonation using actual database roles.
+
+Tracked in [issue #93](https://github.com/PerezChris99/raw-sql-vault/issues/93). This is a static finding; no runtime exploit test was performed.
+
 ## Required follow-up validation
 
 - Add focused Node.js and Python connector tests for parameter binding, pooled-context reset, transactions, retries, TLS, credentials with special characters, rate-limit memory, and shutdown.
