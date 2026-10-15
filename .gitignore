@@ -1,0 +1,49 @@
+# Environment secrets: keep only explicitly safe example templates.
+.env
+.env.*
+!.env.example
+!.env.*.example
+!.env.template
+*.secret
+secrets/
+credentials/
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+
+# Database dumps, exports, and backups may contain sensitive data.
+*.dump
+*.backup
+*.bak
+*.sql.gz
+*.pgdump
+*.tar.gz
+backups/
+exports/
+dumps/
+
+# Runtime/build output.
+node_modules/
+dist/
+build/
+coverage/
+.nyc_output/
+*.log
+logs/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+.envrc.local
+
+# Local editor and operating-system files.
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
